@@ -1,0 +1,6 @@
+#idea files
+*.iml
+.idea
+
+#Mac files
+.DS_Store
