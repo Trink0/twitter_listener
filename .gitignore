@@ -1,6 +1,7 @@
 #idea files
 *.iml
 .idea
+build/
 
 #Mac files
 .DS_Store
