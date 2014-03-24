@@ -15,9 +15,14 @@ var (
 func main() {
 	flag.StringVar(&appStoreUrl, "db", "127.0.0.1:6379 db=1",
 		"Redis database connection URL.")
-	flag.StringVar(&singleAppName, "a", "",
-		"Launch listener only for a single app. Otherwise listen for all apps.")
+	flag.StringVar(&singleAppName, "app", "",
+		"Launches single listener only for a specific app if not empty.")
 	flag.Parse()
+
+	if len(flag.Args()) > 0 {
+		flag.Usage()
+		return
+	}
 
 	store := listener.NewAppStore(appStoreUrl)
 

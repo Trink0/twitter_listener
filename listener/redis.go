@@ -7,10 +7,13 @@ import (
 	"github.com/fiorix/go-redis/redis"
 )
 
+// redisAppStore is Redis-based implementation of AppStore
 type redisAppStore struct {
 	connUrl string
 }
 
+// NewAppStore creates a new instance of Redis-based AppStore.
+// Connection URL should also specify db number, e.g. "127.0.0.1:6379 db=1".
 func NewAppStore(connUrl string) AppStore {
 	return &redisAppStore{connUrl}
 }

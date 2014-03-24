@@ -2,31 +2,33 @@ package listener
 
 import (
 	"log"
-	"time"
 )
 
+// Listener is a Twitter Streaming API client.
 type Listener interface {
+	// Start initiates a connection and reads from it indefinitely in a goroutine
+	// c is a control channel used by the listener to communicate an exit error.
 	Start(c chan int)
 }
 
+// NewListener creates a new listener with credentials provided by the app.
 func NewListener(app *Application) Listener {
 	return listenerFactory(app)
 }
 
+// httpStreamer is a default implementation of the Listener over HTTP
+// using Public Stream API.
 type httpStreamer struct {
-	app *Application
+	app   *Application
+	users []string
 }
 
 func (s *httpStreamer) Start(c chan int) {
-	log.Printf("Starting Listener: %s", s.app.Name)
+	log.Printf("Starting listener %q", s.app.Name)
 	go s.stream(c)
 }
 
-func (s *httpStreamer) stream(c chan int) {
-	time.Sleep(time.Second * 5)
-	c <- 1
-}
-
+// StartOne creates and starts one listener for the specified application.
 func StartOne(s AppStore, appName string) error {
 	app, err := s.GetApp(appName)
 	if err != nil {
@@ -41,6 +43,8 @@ func StartOne(s AppStore, appName string) error {
 	return nil
 }
 
+// StartAll creates and starts a new listener for each application
+// registered in the store.
 func StartAll(s AppStore) error {
 	appNames, err := s.ListAppNames()
 	if err != nil {
@@ -67,18 +71,21 @@ func StartAll(s AppStore) error {
 	return nil
 }
 
+// waitAll reads from the
 func waitAll(c chan int, n int) {
 	count := 0
 	for {
 		status := <-c
-		log.Printf("Listener Exiting with status: %d", status)
+		log.Printf("Listener exited with status %d", status)
 		if count += 1; count == n {
-			log.Printf("Exiting application")
+			log.Printf("Quit application")
 			break
 		}
 	}
 }
 
+// listenerFactory is by NewListener to create a new listener struct.
+// Meant overwritten in tests.
 var listenerFactory = func(a *Application) Listener {
-	return &httpStreamer{app: a}
+	return &httpStreamer{app: a, users: []string{"15170239", "1585341620"}}
 }

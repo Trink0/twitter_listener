@@ -12,8 +12,8 @@ type Application struct {
 
 // AppStore is the client for a storage backend where all apps data are located at.
 type AppStore interface {
-  // ListAppNames returns a list of names of all currently registered apps.
-  ListAppNames() ([]string, error)
-  // GetApp retuns a single application data identified by its name.
-  GetApp(name string) (*Application, error)
+	// ListAppNames fetches a list of names of all currently registered apps.
+	ListAppNames() ([]string, error)
+	// GetApp fetches a single application data identified by its name.
+	GetApp(name string) (*Application, error)
 }

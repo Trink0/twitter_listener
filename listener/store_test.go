@@ -1,14 +1,15 @@
 package listener
 
+// dummyAppStore is a fake implementation of AppStore.
 type dummyAppStore struct {
-  listAppNames func()([]string, error)
-  getApp func(string)(*Application, error)
+	listAppNames func() ([]string, error)
+	getApp       func(string) (*Application, error)
 }
 
 func (s *dummyAppStore) ListAppNames() ([]string, error) {
-  return s.listAppNames()
+	return s.listAppNames()
 }
 
 func (s *dummyAppStore) GetApp(name string) (*Application, error) {
-  return s.getApp(name)
+	return s.getApp(name)
 }
