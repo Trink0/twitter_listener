@@ -13,16 +13,16 @@ func NewListener(app *Application) Listener {
 	return listenerFactory(app)
 }
 
-type httpListener struct {
+type httpStreamer struct {
 	app *Application
 }
 
-func (l *httpListener) Start(c chan int) {
-	log.Printf("Starting Listener: %s", l.app.Name)
-	go l.stream(c)
+func (s *httpStreamer) Start(c chan int) {
+	log.Printf("Starting Listener: %s", s.app.Name)
+	go s.stream(c)
 }
 
-func (l *httpListener) stream(c chan int) {
+func (s *httpStreamer) stream(c chan int) {
 	time.Sleep(time.Second * 5)
 	c <- 1
 }
@@ -80,5 +80,5 @@ func waitAll(c chan int, n int) {
 }
 
 var listenerFactory = func(a *Application) Listener {
-	return &httpListener{app: a}
+	return &httpStreamer{app: a}
 }
