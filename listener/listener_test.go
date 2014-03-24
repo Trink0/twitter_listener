@@ -12,6 +12,28 @@ func (l *dummyListener) Start(c chan int) {
 	c <- 1
 }
 
+func TestStartOne(t *testing.T) {
+	store := &dummyAppStore{}
+	store.getApp = func(name string) (*Application, error) {
+		if name != "chumhum" {
+			t.Errorf("Have app name %q, want chumhum", name)
+		}
+		return &Application{Name: name}, nil
+	}
+
+	dummy := &dummyListener{}
+	listenerFactory = func(app *Application) Listener {
+		return dummy
+	}
+
+	if err := StartOne(store, "chumhum"); err != nil {
+		t.Fatal(err)
+	}
+	if !dummy.startCalled {
+		t.Error("Didn't call listener.Start()")
+	}
+}
+
 func TestStartAllEmpty(t *testing.T) {
 	store := &dummyAppStore{}
 	store.listAppNames = func() ([]string, error) {
