@@ -1,22 +1,14 @@
-// +build test
-
 package listener
 
-import (
-	"fmt"
-)
-
-func (s *AppStore) ListAppNames() ([]string, error) {
-	return []string{"chumhum"}, nil
+type dummyAppStore struct {
+  listAppNames func()([]string, error)
+  getApp func(string)(*Application, error)
 }
 
-func (s *AppStore) GetApp(name string) (app *Application, err error) {
-	switch name {
-	case "chumhum":
-		app = &Application{Name: name}
-		err = nil
-	default:
-		err = fmt.Errorf("Fake app %q not found ", name)
-	}
-	return
+func (s *dummyAppStore) ListAppNames() ([]string, error) {
+  return s.listAppNames()
+}
+
+func (s *dummyAppStore) GetApp(name string) (*Application, error) {
+  return s.getApp(name)
 }

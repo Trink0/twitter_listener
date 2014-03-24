@@ -1,5 +1,3 @@
-// +build !test
-
 package listener
 
 import (
@@ -9,12 +7,20 @@ import (
 	"github.com/fiorix/go-redis/redis"
 )
 
-func (s *AppStore) ListAppNames() ([]string, error) {
+type redisAppStore struct {
+	connUrl string
+}
+
+func NewAppStore(connUrl string) AppStore {
+	return &redisAppStore{connUrl}
+}
+
+func (s *redisAppStore) ListAppNames() ([]string, error) {
 	rc := redis.New(s.connUrl)
 	return rc.Keys("*")
 }
 
-func (s *AppStore) GetApp(name string) (*Application, error) {
+func (s *redisAppStore) GetApp(name string) (app *Application, getErr error) {
 	rc := redis.New(s.connUrl)
 
 	jsonApp, err := rc.Get(name)
@@ -25,9 +31,7 @@ func (s *AppStore) GetApp(name string) (*Application, error) {
 		return nil, fmt.Errorf("App %q not found", name)
 	}
 
-	storedApp := &Application{}
-	if err := json.Unmarshal([]byte(jsonApp), storedApp); err != nil {
-		return nil, err
-	}
-	return storedApp, nil
+	app = &Application{}
+	getErr = json.Unmarshal([]byte(jsonApp), app)
+	return
 }

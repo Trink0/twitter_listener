@@ -10,10 +10,10 @@ type Application struct {
 	TwTokenSecret    string `json:"twitterTokenSecret"`
 }
 
-type AppStore struct {
-	connUrl string
-}
-
-func NewAppStore(connUrl string) *AppStore {
-	return &AppStore{connUrl}
+// AppStore is the client for a storage backend where all apps data are located at.
+type AppStore interface {
+  // ListAppNames returns a list of names of all currently registered apps.
+  ListAppNames() ([]string, error)
+  // GetApp retuns a single application data identified by its name.
+  GetApp(name string) (*Application, error)
 }
