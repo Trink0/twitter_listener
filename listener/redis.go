@@ -8,17 +8,18 @@ import (
 	"github.com/fiorix/go-redis/redis"
 )
 
+// NewStore creates a new instance of Redis-based Store.
+// The URL should not spcify any db number, e.g. "127.0.0.1:6379".
+// Internally, connection URL is then constructed from dbURL and a database number.
+func NewStore(dbURL string, appDB, userDB int) Store {
+	return &redisStore{dbURL, appDB, userDB}
+}
+
 // redisStore is Redis-based implementation of Store
 type redisStore struct {
 	dbURL  string
 	appDB  int
 	userDB int
-}
-
-// NewStore creates a new instance of Redis-based Store.
-// Connection URL should also specify db number, e.g. "127.0.0.1:6379 db=1".
-func NewStore(dbURL string, appDB, userDB int) Store {
-	return &redisStore{dbURL, appDB, userDB}
 }
 
 func (s *redisStore) ListAppNames() ([]string, error) {

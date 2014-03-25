@@ -17,8 +17,8 @@ import (
 // filterURL is Twitter Filter Streaming API endpoint
 const filterURL = "https://stream.twitter.com/1.1/statuses/filter.json"
 
-// endOfTweet is a single tweet delimiter in the stream.
 var (
+	// endOfTweet is a tweet delimiter in the stream.
 	endOfTweet = []byte{13, 10}
 	lenEOT     = len(endOfTweet)
 )
@@ -112,6 +112,8 @@ func (s *httpStreamer) loop(reader io.Reader) {
 	}
 }
 
+// digest pushes the tweet to a processing queue or silently ignores it
+// if nil or does not belong to the application's users.
 func (s *httpStreamer) digest(tweet *Tweet) {
 	// TODO: favorites might be useful too.
 	if tweet == nil || !isInList(s.users, tweet.User.ID) {
@@ -121,6 +123,7 @@ func (s *httpStreamer) digest(tweet *Tweet) {
 	log.Printf("%v", tweet)
 }
 
+// unmarshalTweet parses jsonTweet bytes into Tweet struct.
 func unmarshalTweet(jsonTweet []byte) *Tweet {
 	if len(jsonTweet) < 3 {
 		return nil
@@ -135,6 +138,8 @@ func unmarshalTweet(jsonTweet []byte) *Tweet {
 	return tweet
 }
 
+// isInList returns true if list contains elem using binary search.
+// list is assumed to be already sorted in ascending order.
 func isInList(list []string, elem string) bool {
 	i := sort.SearchStrings(list, elem)
 	return i < len(list) && list[i] == elem
