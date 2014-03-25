@@ -12,8 +12,8 @@ type Listener interface {
 }
 
 // NewListener creates a new listener with credentials provided by the app.
-func NewListener(app *Application) Listener {
-	return listenerFactory(app)
+func NewListener(app *Application, userIds []string) Listener {
+	return listenerFactory(app, userIds)
 }
 
 // httpStreamer is a default implementation of the Listener over HTTP
@@ -29,14 +29,18 @@ func (s *httpStreamer) Start(c chan int) {
 }
 
 // StartOne creates and starts one listener for the specified application.
-func StartOne(s AppStore, appName string) error {
+func StartOne(s AppStore, u AppStore, appName string) error {
 	app, err := s.GetApp(appName)
 	if err != nil {
 		return err
 	}
+	userIds, userErr := u.ListAppUserIds(appName)
+	if userErr != nil {
+		return userErr
+	}
 
 	c := make(chan int, 1)
-	listener := NewListener(app)
+	listener := NewListener(app, userIds)
 	listener.Start(c)
 
 	waitAll(c, 1)
@@ -45,7 +49,7 @@ func StartOne(s AppStore, appName string) error {
 
 // StartAll creates and starts a new listener for each application
 // registered in the store.
-func StartAll(s AppStore) error {
+func StartAll(s AppStore, u AppStore) error {
 	appNames, err := s.ListAppNames()
 	if err != nil {
 		return err
@@ -63,7 +67,12 @@ func StartAll(s AppStore) error {
 			continue
 		}
 
-		listener := NewListener(storedApp)
+		userIds, userErr := u.ListAppUserIds(name)
+		if userErr != nil {
+			return userErr
+		}
+
+		listener := NewListener(storedApp, userIds)
 		listener.Start(c)
 	}
 
@@ -86,6 +95,6 @@ func waitAll(c chan int, n int) {
 
 // listenerFactory is by NewListener to create a new listener struct.
 // Meant overwritten in tests.
-var listenerFactory = func(a *Application) Listener {
-	return &httpStreamer{app: a, users: []string{"15170239", "1585341620"}}
+var listenerFactory = func(a *Application, userIds []string) Listener {
+	return &httpStreamer{app: a, users: userIds}
 }

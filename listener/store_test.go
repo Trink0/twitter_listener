@@ -4,6 +4,7 @@ package listener
 type dummyAppStore struct {
 	listAppNames func() ([]string, error)
 	getApp       func(string) (*Application, error)
+	getUserIds   func(string) ([]string, error)
 }
 
 func (s *dummyAppStore) ListAppNames() ([]string, error) {
@@ -12,4 +13,8 @@ func (s *dummyAppStore) ListAppNames() ([]string, error) {
 
 func (s *dummyAppStore) GetApp(name string) (*Application, error) {
 	return s.getApp(name)
+}
+
+func (s *dummyAppStore) ListAppUserIds(name string) ([]string, error) {
+	return s.getUserIds(name)
 }

@@ -4,6 +4,7 @@ import "testing"
 
 type dummyListener struct {
 	name        string
+	users       []string
 	startCalled bool
 }
 
@@ -14,19 +15,24 @@ func (l *dummyListener) Start(c chan int) {
 
 func TestStartOne(t *testing.T) {
 	store := &dummyAppStore{}
+	userStore := &dummyAppStore{}
 	store.getApp = func(name string) (*Application, error) {
 		if name != "chumhum" {
 			t.Errorf("Have app name %q, want chumhum", name)
 		}
 		return &Application{Name: name}, nil
 	}
+	userStore.getUserIds = func(name string) ([]string, error) {
+		userIds := []string{"15170239", "1585341620"}
+		return userIds, nil
+	}
 
 	dummy := &dummyListener{}
-	listenerFactory = func(app *Application) Listener {
+	listenerFactory = func(app *Application, userIds []string) Listener {
 		return dummy
 	}
 
-	if err := StartOne(store, "chumhum"); err != nil {
+	if err := StartOne(store, userStore, "chumhum"); err != nil {
 		t.Fatal(err)
 	}
 	if !dummy.startCalled {
@@ -36,11 +42,12 @@ func TestStartOne(t *testing.T) {
 
 func TestStartAllEmpty(t *testing.T) {
 	store := &dummyAppStore{}
+	userStore := &dummyAppStore{}
 	store.listAppNames = func() ([]string, error) {
 		return []string{}, nil
 	}
 
-	err := StartAll(store)
+	err := StartAll(store, userStore)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,21 +55,26 @@ func TestStartAllEmpty(t *testing.T) {
 
 func TestStartAll(t *testing.T) {
 	store := &dummyAppStore{}
+	userStore := &dummyAppStore{}
 	store.listAppNames = func() ([]string, error) {
 		return []string{"chumhum", "xpeppers"}, nil
 	}
 	store.getApp = func(name string) (*Application, error) {
 		return &Application{Name: name}, nil
 	}
+	userStore.getUserIds = func(name string) ([]string, error) {
+		userIds := []string{"15170239", "1585341620"}
+		return userIds, nil
+	}
 
 	listeners := make([]*dummyListener, 0)
-	listenerFactory = func(app *Application) Listener {
-		dummy := &dummyListener{name: app.Name}
+	listenerFactory = func(app *Application, userIds []string) Listener {
+		dummy := &dummyListener{name: app.Name, users: userIds}
 		listeners = append(listeners, dummy)
 		return dummy
 	}
 
-	err := StartAll(store)
+	err := StartAll(store, userStore)
 	if err != nil {
 		t.Fatal(err)
 	}

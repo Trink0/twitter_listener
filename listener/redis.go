@@ -38,3 +38,20 @@ func (s *redisAppStore) GetApp(name string) (app *Application, getErr error) {
 	getErr = json.Unmarshal([]byte(jsonApp), app)
 	return
 }
+
+func (s *redisAppStore) ListAppUserIds(name string) ([]string, error) {
+	rc := redis.New(s.connUrl)
+
+	userIds, err := rc.SMembers("customer:" + name)
+	if err != nil {
+		return nil, err
+	}
+	if len(userIds) == 0 {
+		return nil, fmt.Errorf("User for App %q not found", name)
+	}
+
+	for i := 0; i < len(userIds); i++ {
+		//jsonUser, err := rc.Get(userIds[i])
+	}
+	return []string{"15170239", "1585341620"}, nil
+}

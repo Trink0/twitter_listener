@@ -16,4 +16,6 @@ type AppStore interface {
 	ListAppNames() ([]string, error)
 	// GetApp fetches a single application data identified by its name.
 	GetApp(name string) (*Application, error)
+	// GetApp fetches a single application data identified by its name.
+	ListAppUserIds(name string) ([]string, error)
 }
