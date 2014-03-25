@@ -2,9 +2,9 @@ package listener
 
 // dummyStore is a fake implementation of Store.
 type dummyStore struct {
-	listAppNames func() ([]string, error)
-	getApp       func(string) (*Application, error)
-	getUserIds   func(string) ([]string, error)
+	listAppNames   func() ([]string, error)
+	getApp         func(string) (*Application, error)
+	listTwitterIDs func(string) ([]string, error)
 }
 
 func (s *dummyStore) ListAppNames() ([]string, error) {
@@ -15,6 +15,6 @@ func (s *dummyStore) GetApp(name string) (*Application, error) {
 	return s.getApp(name)
 }
 
-func (s *dummyStore) ListAppUserIds(name string) ([]string, error) {
-	return s.getUserIds(name)
+func (s *dummyStore) ListTwitterIDs(name string) ([]string, error) {
+	return s.listTwitterIDs(name)
 }

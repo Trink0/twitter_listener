@@ -8,33 +8,32 @@ import (
 )
 
 var (
-	StoreUrl      string
-	userStoreUrl  string
-	singleAppName string
+	// Apps & users database URL
+	dbURL string
+	// Users DB
+	userDB int
+	// Apps DB
+	appDB int
 )
 
 func main() {
-	flag.StringVar(&StoreUrl, "db", "127.0.0.1:6379 db=1",
-		"Redis database connection URL.")
-	flag.StringVar(&userStoreUrl, "dbuser", "127.0.0.1:6379 db=0",
-		"Redis database connection URL.")
-	flag.StringVar(&singleAppName, "app", "",
-		"Launches single listener only for a specific app if not empty.")
+	flag.StringVar(&dbURL, "dburl", "127.0.0.1:6379", "Redis database connection URL.")
+	flag.IntVar(&userDB, "userdb", 0, "Redis Users DB number.")
+	flag.IntVar(&appDB, "appdb", 1, "Redis Applications DB number.")
 	flag.Parse()
 
-	if len(flag.Args()) > 0 {
+	if len(flag.Args()) > 1 {
 		flag.Usage()
 		return
 	}
 
-	store := listener.NewStore(StoreUrl)
-	userStore := listener.NewStore(userStoreUrl)
+	store := listener.NewStore(dbURL, appDB, userDB)
 
 	var startErr error
-	if singleAppName != "" {
-		startErr = listener.StartOne(store, userStore, singleAppName)
+	if appName := flag.Arg(0); appName != "" {
+		startErr = listener.StartOne(store, appName)
 	} else {
-		startErr = listener.StartAll(store, userStore)
+		startErr = listener.StartAll(store)
 	}
 
 	if startErr != nil {

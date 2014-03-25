@@ -24,23 +24,28 @@ type httpStreamer struct {
 }
 
 func (s *httpStreamer) Start(c chan int) {
-	log.Printf("Starting listener %q", s.app.Name)
+	log.Printf("Starting listener %q (%d users)", s.app.Name, len(s.users))
+	log.Printf("DEBUG %s: %v", s.app.Name, s.users)
 	go s.stream(c)
 }
 
 // StartOne creates and starts one listener for the specified application.
-func StartOne(s Store, u Store, appName string) error {
+func StartOne(s Store, appName string) error {
 	app, err := s.GetApp(appName)
 	if err != nil {
 		return err
 	}
-	userIds, userErr := u.ListAppUserIds(appName)
+	userIDs, userErr := s.ListTwitterIDs(appName)
 	if userErr != nil {
 		return userErr
 	}
+	if len(userIDs) == 0 {
+		log.Printf("No users found for app %q. Exiting.", appName)
+		return nil
+	}
 
 	c := make(chan int, 1)
-	listener := NewListener(app, userIds)
+	listener := NewListener(app, userIDs)
 	listener.Start(c)
 
 	waitAll(c, 1)
@@ -49,7 +54,7 @@ func StartOne(s Store, u Store, appName string) error {
 
 // StartAll creates and starts a new listener for each application
 // registered in the store.
-func StartAll(s Store, u Store) error {
+func StartAll(s Store) error {
 	appNames, err := s.ListAppNames()
 	if err != nil {
 		return err
@@ -67,12 +72,12 @@ func StartAll(s Store, u Store) error {
 			continue
 		}
 
-		userIds, userErr := u.ListAppUserIds(name)
+		userIDs, userErr := s.ListTwitterIDs(name)
 		if userErr != nil {
 			return userErr
 		}
 
-		listener := NewListener(storedApp, userIds)
+		listener := NewListener(storedApp, userIDs)
 		listener.Start(c)
 	}
 

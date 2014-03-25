@@ -51,8 +51,8 @@ func (s *httpStreamer) open() (io.ReadCloser, error) {
 		Token:  s.app.TwAccessToken,
 		Secret: s.app.TwTokenSecret,
 	}
-	auth := cl.AuthorizationHeader(creds, req.Method, req.URL, params)
 
+	auth := cl.AuthorizationHeader(creds, req.Method, req.URL, params)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Authorization", auth)
 

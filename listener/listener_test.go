@@ -1,6 +1,9 @@
 package listener
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 type dummyListener struct {
 	name        string
@@ -15,16 +18,14 @@ func (l *dummyListener) Start(c chan int) {
 
 func TestStartOne(t *testing.T) {
 	store := &dummyStore{}
-	userStore := &dummyStore{}
 	store.getApp = func(name string) (*Application, error) {
 		if name != "chumhum" {
 			t.Errorf("Have app name %q, want chumhum", name)
 		}
 		return &Application{Name: name}, nil
 	}
-	userStore.getUserIds = func(name string) ([]string, error) {
-		userIds := []string{"15170239", "1585341620"}
-		return userIds, nil
+	store.listTwitterIDs = func(name string) ([]string, error) {
+		return []string{"15170239", "1585341620"}, nil
 	}
 
 	dummy := &dummyListener{}
@@ -32,7 +33,7 @@ func TestStartOne(t *testing.T) {
 		return dummy
 	}
 
-	if err := StartOne(store, userStore, "chumhum"); err != nil {
+	if err := StartOne(store, "chumhum"); err != nil {
 		t.Fatal(err)
 	}
 	if !dummy.startCalled {
@@ -42,29 +43,27 @@ func TestStartOne(t *testing.T) {
 
 func TestStartAllEmpty(t *testing.T) {
 	store := &dummyStore{}
-	userStore := &dummyStore{}
 	store.listAppNames = func() ([]string, error) {
 		return []string{}, nil
 	}
 
-	err := StartAll(store, userStore)
+	err := StartAll(store)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestStartAll(t *testing.T) {
+	twitterIDs := []string{"15170239", "1585341620"}
 	store := &dummyStore{}
-	userStore := &dummyStore{}
 	store.listAppNames = func() ([]string, error) {
 		return []string{"chumhum", "xpeppers"}, nil
 	}
 	store.getApp = func(name string) (*Application, error) {
 		return &Application{Name: name}, nil
 	}
-	userStore.getUserIds = func(name string) ([]string, error) {
-		userIds := []string{"15170239", "1585341620"}
-		return userIds, nil
+	store.listTwitterIDs = func(name string) ([]string, error) {
+		return twitterIDs, nil
 	}
 
 	listeners := make([]*dummyListener, 0)
@@ -74,7 +73,7 @@ func TestStartAll(t *testing.T) {
 		return dummy
 	}
 
-	err := StartAll(store, userStore)
+	err := StartAll(store)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,6 +88,9 @@ func TestStartAll(t *testing.T) {
 		}
 		if l.name != "xpeppers" && l.name != "chumhum" {
 			t.Errorf("Have app name %q, want either xpeppers or chumhum", l.name)
+		}
+		if !reflect.DeepEqual(l.users, twitterIDs) {
+			t.Errorf("Have twitter IDs: %v, want %v", l.users, twitterIDs)
 		}
 	}
 }

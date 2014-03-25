@@ -3,30 +3,30 @@ package listener
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/fiorix/go-redis/redis"
 )
 
 // redisStore is Redis-based implementation of Store
 type redisStore struct {
-	connUrl string
+	dbURL  string
+	appDB  int
+	userDB int
 }
 
 // NewStore creates a new instance of Redis-based Store.
 // Connection URL should also specify db number, e.g. "127.0.0.1:6379 db=1".
-func NewStore(connUrl string) Store {
-	return &redisStore{connUrl}
+func NewStore(dbURL string, appDB, userDB int) Store {
+	return &redisStore{dbURL, appDB, userDB}
 }
 
 func (s *redisStore) ListAppNames() ([]string, error) {
-	rc := redis.New(s.connUrl)
-	return rc.Keys("*")
+	return s.newClient(s.appDB).Keys("*")
 }
 
 func (s *redisStore) GetApp(name string) (app *Application, getErr error) {
-	rc := redis.New(s.connUrl)
-
-	jsonApp, err := rc.Get(name)
+	jsonApp, err := s.newClient(s.appDB).Get(name)
 	if err != nil {
 		return nil, err
 	}
@@ -39,19 +39,47 @@ func (s *redisStore) GetApp(name string) (app *Application, getErr error) {
 	return
 }
 
-func (s *redisStore) ListAppUserIds(name string) ([]string, error) {
-	rc := redis.New(s.connUrl)
+func (s *redisStore) ListTwitterIDs(name string) ([]string, error) {
+	users := s.newClient(s.userDB)
 
-	userIds, err := rc.SMembers("customer:" + name)
+	userIDs, err := users.SMembers("customer:" + name)
 	if err != nil {
 		return nil, err
 	}
-	if len(userIds) == 0 {
-		return nil, fmt.Errorf("User for App %q not found", name)
+
+	twitterIDs := make([]string, 0, len(userIDs))
+	for _, userID := range userIDs {
+		jsonUser, getErr := users.Get(userID)
+		if getErr != nil {
+			log.Printf("ERROR getting user %q of app %q", userID, name)
+			continue
+		}
+
+		user := &User{}
+		if json.Unmarshal([]byte(jsonUser), user) != nil {
+			log.Printf("ERROR parsing JSON user data of %q (%s)", userID, name)
+			continue
+		}
+		if user.Metadata == nil {
+			log.Printf("WARNING: no metadata for user %q (%s)", userID, name)
+			continue
+		}
+
+		// TODO: find a better way to get twitter ID,
+		// e.g. store it in user.Metadata["twitter.user.id"]
+		if _, ok := user.Metadata["twitter.user.screenName"]; ok {
+			twitterIDs = append(twitterIDs, user.Username)
+		}
 	}
 
-	for i := 0; i < len(userIds); i++ {
-		//jsonUser, err := rc.Get(userIds[i])
-	}
-	return []string{"15170239", "1585341620"}, nil
+	return twitterIDs, nil
+	// return []string{"15170239", "1585341620"}, nil
+}
+
+func (s *redisStore) connectionURL(db int) string {
+	return fmt.Sprintf("%s db=%d", s.dbURL, db)
+}
+
+func (s *redisStore) newClient(db int) *redis.Client {
+	return redis.New(s.connectionURL(db))
 }
