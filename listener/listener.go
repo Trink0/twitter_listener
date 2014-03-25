@@ -2,6 +2,7 @@ package listener
 
 import (
 	"log"
+	"sort"
 )
 
 // Listener is a Twitter Streaming API client.
@@ -24,6 +25,7 @@ type httpStreamer struct {
 }
 
 func (s *httpStreamer) Start(c chan int) {
+	sort.Strings(s.users)
 	log.Printf("Starting listener %q (%d users)", s.app.Name, len(s.users))
 	log.Printf("DEBUG %s: %v", s.app.Name, s.users)
 	go s.stream(c)

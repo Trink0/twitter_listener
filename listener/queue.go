@@ -1,7 +1,7 @@
 package listener
 
 import (
-	"time"
+// "time"
 )
 
 // Tweet is what Twitter sends back as stream items.
@@ -15,7 +15,7 @@ type Tweet struct {
 	}
 	// Source is a Twitter client name used to post the tweet.
 	Source    string
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt string/*time.Time*/ `json:"created_at"`
 	User      struct {
 		ID         string `json:"id_str"`
 		ScreenName string `json:"screen_name"`

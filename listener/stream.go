@@ -1,11 +1,14 @@
 package listener
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/garyburd/go-oauth/oauth"
@@ -13,6 +16,12 @@ import (
 
 // filterURL is Twitter Filter Streaming API endpoint
 const filterURL = "https://stream.twitter.com/1.1/statuses/filter.json"
+
+// endOfTweet is a single tweet delimiter in the stream.
+var (
+	endOfTweet = []byte{13, 10}
+	lenEOT     = len(endOfTweet)
+)
 
 // stream initiates streaming connection and starts receiving in an infinite loop.
 func (s *httpStreamer) stream(c chan int) {
@@ -35,6 +44,7 @@ func (s *httpStreamer) stream(c chan int) {
 // The caller is responsible for closing the stream.
 func (s *httpStreamer) open() (io.ReadCloser, error) {
 	params := url.Values{"follow": {strings.Join(s.users, ",")}}
+	// params := url.Values{"track": []string{"Twitter"}}
 	req, err := http.NewRequest("POST", filterURL, strings.NewReader(params.Encode()))
 	if err != nil {
 		return nil, err
@@ -71,16 +81,61 @@ func (s *httpStreamer) open() (io.ReadCloser, error) {
 
 // loop reads from provided reader stream and logs received data indefinitely.
 func (s *httpStreamer) loop(reader io.Reader) {
-	buf := make([]byte, 1024)
+	var (
+		buf     = make([]byte, 1024)
+		stream  bytes.Buffer
+		lastIdx = 0
+	)
 	for {
-		n, readErr := reader.Read(buf)
+		n, err := reader.Read(buf)
 		if n > 0 {
-			log.Printf("Got %d bytes: \n%s\n", n, string(buf[:n]))
+			stream.Write(buf[:n])
+			body := stream.Bytes()
+			if i := bytes.Index(body[lastIdx:], endOfTweet); i >= 0 {
+				i += lastIdx
+				go s.digest(unmarshalTweet(body[:i+lenEOT-1]))
+				stream.Truncate(0)
+				stream.Write(body[i+lenEOT:])
+				lastIdx = 0
+			} else {
+				lastIdx = len(body) - lenEOT
+				if lastIdx < 0 {
+					lastIdx = 0
+				}
+			}
 		}
 
-		if readErr != nil {
-			log.Printf("Connection error: %v", readErr)
+		if err != nil {
+			log.Printf("%q stream: %v", s.app.Name, err)
 			break
 		}
 	}
+}
+
+func (s *httpStreamer) digest(tweet *Tweet) {
+	// TODO: favorites might be useful too.
+	if tweet == nil || !isInList(s.users, tweet.User.ID) {
+		return
+	}
+
+	log.Printf("%v", tweet)
+}
+
+func unmarshalTweet(jsonTweet []byte) *Tweet {
+	if len(jsonTweet) < 3 {
+		return nil
+	}
+
+	tweet := &Tweet{}
+	if err := json.Unmarshal(jsonTweet, tweet); err != nil {
+		log.Printf("ERROR parsing tweet: %v", err)
+		return nil
+	}
+
+	return tweet
+}
+
+func isInList(list []string, elem string) bool {
+	i := sort.SearchStrings(list, elem)
+	return i < len(list) && list[i] == elem
 }
