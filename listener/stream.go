@@ -80,22 +80,22 @@ func (s *httpStreamer) open() (io.ReadCloser, error) {
 }
 
 // loop reads from provided reader stream and logs received data indefinitely.
-func (s *httpStreamer) loop(reader io.Reader) {
+func (s *httpStreamer) loop(stream io.Reader) {
 	var (
-		buf     = make([]byte, 1024)
-		stream  bytes.Buffer
+		p       = make([]byte, 1024)
+		buf     bytes.Buffer
 		lastIdx = 0
 	)
 	for {
-		n, err := reader.Read(buf)
+		n, err := stream.Read(p)
 		if n > 0 {
-			stream.Write(buf[:n])
-			body := stream.Bytes()
+			buf.Write(p[:n])
+			body := buf.Bytes()
 			if i := bytes.Index(body[lastIdx:], endOfTweet); i >= 0 {
 				i += lastIdx
 				go s.digest(unmarshalTweet(body[:i+lenEOT-1]))
-				stream.Truncate(0)
-				stream.Write(body[i+lenEOT:])
+				buf.Truncate(0)
+				buf.Write(body[i+lenEOT:])
 				lastIdx = 0
 			} else {
 				lastIdx = len(body) - lenEOT
