@@ -10,8 +10,8 @@ type Application struct {
 	TwTokenSecret    string `json:"twitterTokenSecret"`
 }
 
-// AppStore is the client for a storage backend where all apps data are located at.
-type AppStore interface {
+// Store is the client for a storage backend where all apps data are located at.
+type Store interface {
 	// ListAppNames fetches a list of names of all currently registered apps.
 	ListAppNames() ([]string, error)
 	// GetApp fetches a single application data identified by its name.

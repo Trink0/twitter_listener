@@ -7,23 +7,23 @@ import (
 	"github.com/fiorix/go-redis/redis"
 )
 
-// redisAppStore is Redis-based implementation of AppStore
-type redisAppStore struct {
+// redisStore is Redis-based implementation of Store
+type redisStore struct {
 	connUrl string
 }
 
-// NewAppStore creates a new instance of Redis-based AppStore.
+// NewStore creates a new instance of Redis-based Store.
 // Connection URL should also specify db number, e.g. "127.0.0.1:6379 db=1".
-func NewAppStore(connUrl string) AppStore {
-	return &redisAppStore{connUrl}
+func NewStore(connUrl string) Store {
+	return &redisStore{connUrl}
 }
 
-func (s *redisAppStore) ListAppNames() ([]string, error) {
+func (s *redisStore) ListAppNames() ([]string, error) {
 	rc := redis.New(s.connUrl)
 	return rc.Keys("*")
 }
 
-func (s *redisAppStore) GetApp(name string) (app *Application, getErr error) {
+func (s *redisStore) GetApp(name string) (app *Application, getErr error) {
 	rc := redis.New(s.connUrl)
 
 	jsonApp, err := rc.Get(name)
@@ -39,7 +39,7 @@ func (s *redisAppStore) GetApp(name string) (app *Application, getErr error) {
 	return
 }
 
-func (s *redisAppStore) ListAppUserIds(name string) ([]string, error) {
+func (s *redisStore) ListAppUserIds(name string) ([]string, error) {
 	rc := redis.New(s.connUrl)
 
 	userIds, err := rc.SMembers("customer:" + name)

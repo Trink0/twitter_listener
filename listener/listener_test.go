@@ -14,8 +14,8 @@ func (l *dummyListener) Start(c chan int) {
 }
 
 func TestStartOne(t *testing.T) {
-	store := &dummyAppStore{}
-	userStore := &dummyAppStore{}
+	store := &dummyStore{}
+	userStore := &dummyStore{}
 	store.getApp = func(name string) (*Application, error) {
 		if name != "chumhum" {
 			t.Errorf("Have app name %q, want chumhum", name)
@@ -41,8 +41,8 @@ func TestStartOne(t *testing.T) {
 }
 
 func TestStartAllEmpty(t *testing.T) {
-	store := &dummyAppStore{}
-	userStore := &dummyAppStore{}
+	store := &dummyStore{}
+	userStore := &dummyStore{}
 	store.listAppNames = func() ([]string, error) {
 		return []string{}, nil
 	}
@@ -54,8 +54,8 @@ func TestStartAllEmpty(t *testing.T) {
 }
 
 func TestStartAll(t *testing.T) {
-	store := &dummyAppStore{}
-	userStore := &dummyAppStore{}
+	store := &dummyStore{}
+	userStore := &dummyStore{}
 	store.listAppNames = func() ([]string, error) {
 		return []string{"chumhum", "xpeppers"}, nil
 	}

@@ -8,13 +8,13 @@ import (
 )
 
 var (
-	appStoreUrl   string
+	StoreUrl      string
 	userStoreUrl  string
 	singleAppName string
 )
 
 func main() {
-	flag.StringVar(&appStoreUrl, "db", "127.0.0.1:6379 db=1",
+	flag.StringVar(&StoreUrl, "db", "127.0.0.1:6379 db=1",
 		"Redis database connection URL.")
 	flag.StringVar(&userStoreUrl, "dbuser", "127.0.0.1:6379 db=0",
 		"Redis database connection URL.")
@@ -27,8 +27,8 @@ func main() {
 		return
 	}
 
-	store := listener.NewAppStore(appStoreUrl)
-	userStore := listener.NewAppStore(userStoreUrl)
+	store := listener.NewStore(StoreUrl)
+	userStore := listener.NewStore(userStoreUrl)
 
 	var startErr error
 	if singleAppName != "" {

@@ -29,7 +29,7 @@ func (s *httpStreamer) Start(c chan int) {
 }
 
 // StartOne creates and starts one listener for the specified application.
-func StartOne(s AppStore, u AppStore, appName string) error {
+func StartOne(s Store, u Store, appName string) error {
 	app, err := s.GetApp(appName)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func StartOne(s AppStore, u AppStore, appName string) error {
 
 // StartAll creates and starts a new listener for each application
 // registered in the store.
-func StartAll(s AppStore, u AppStore) error {
+func StartAll(s Store, u Store) error {
 	appNames, err := s.ListAppNames()
 	if err != nil {
 		return err
