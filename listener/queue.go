@@ -71,21 +71,28 @@ type Queue interface {
 }
 
 func NewQueue(endPoint string, queueName string) Queue {
-	return &kestrelQueue{endPoint, queueName}
+	client := memcache.New(endPoint)
+	putFn := func(payload []byte) {
+		putErr := client.Set(&memcache.Item{Key: queueName, Value: payload})
+		if putErr != nil {
+			log.Printf("ERROR queue: %v", putErr)
+		}
+	}
+	return &kestrelQueue{endPoint, queueName, putFn}
 }
 
 type kestrelQueue struct {
 	endPoint  string
 	queueName string
+	putFn     func([]byte)
 }
 
 func (k *kestrelQueue) Start(qc chan *Tweet) {
 	log.Printf("Connecting to Kestrel on %s", k.endPoint)
-	client := memcache.New(k.endPoint)
-	go k.loop(client, qc)
+	go k.loop(qc)
 }
 
-func (k *kestrelQueue) loop(client *memcache.Client, qc chan *Tweet) {
+func (k *kestrelQueue) loop(qc chan *Tweet) {
 	for {
 		tweet := <-qc
 		activity := tweetToActivity(tweet)
@@ -96,10 +103,8 @@ func (k *kestrelQueue) loop(client *memcache.Client, qc chan *Tweet) {
 			continue
 		}
 
-		putErr := client.Set(&memcache.Item{Key: k.queueName, Value: payload})
-		if putErr != nil {
-			log.Printf("ERROR queue: %v", putErr)
-		}
+		k.putFn(payload)
+
 	}
 }
 
