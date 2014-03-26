@@ -2,7 +2,6 @@ package listener
 
 import (
 	"log"
-	"sort"
 )
 
 // Listener is a Twitter Streaming API client.
@@ -84,20 +83,6 @@ func waitAll(c chan int, n int) {
 			break
 		}
 	}
-}
-
-// httpStreamer is a default implementation of the Listener over HTTP
-// using Public Stream API.
-type httpStreamer struct {
-	app   *Application
-	users []string
-}
-
-func (s *httpStreamer) Start(c chan int) {
-	sort.Strings(s.users)
-	log.Printf("Starting listener %q (%d users)", s.app.Name, len(s.users))
-	log.Printf("DEBUG %s: %v", s.app.Name, s.users)
-	go s.stream(c)
 }
 
 // listenerFactory is by NewListener to create a new listener struct.

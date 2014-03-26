@@ -16,13 +16,15 @@ type Tweet struct {
 	// Source is a Twitter client name used to post the tweet.
 	Source    string
 	CreatedAt string/*time.Time*/ `json:"created_at"`
-	User      struct {
-		ID         string `json:"id_str"`
-		ScreenName string `json:"screen_name"`
-		Photo      string `json:"profile_image_url_https"`
-		// Country code, e.g. "en", "it" specified by the user.
-		Lang string
-	}
+	User      TweetUser
+}
+
+type TweetUser struct {
+	ID         string `json:"id_str"`
+	ScreenName string `json:"screen_name"`
+	Photo      string `json:"profile_image_url_https"`
+	// Country code, e.g. "en", "it" specified by the user.
+	Lang string
 }
 
 // TweetEntityUrl is Tweet.Entities.URLs slice item.

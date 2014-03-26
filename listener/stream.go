@@ -23,6 +23,21 @@ var (
 	lenEOT     = len(endOfTweet)
 )
 
+// httpStreamer is a default implementation of the Listener over HTTP
+// using Public Stream API.
+type httpStreamer struct {
+	app   *Application
+	users []string
+	queue chan *Tweet
+}
+
+func (s *httpStreamer) Start(c chan int) {
+	sort.Strings(s.users)
+	log.Printf("Starting listener %q (%d users)", s.app.Name, len(s.users))
+	log.Printf("DEBUG %s: %v", s.app.Name, s.users)
+	go s.stream(c)
+}
+
 // stream initiates streaming connection and starts receiving in an infinite loop.
 func (s *httpStreamer) stream(c chan int) {
 	defer func() {
@@ -121,6 +136,7 @@ func (s *httpStreamer) digest(tweet *Tweet) {
 	}
 
 	log.Printf("%v", tweet)
+	s.queue <- tweet
 }
 
 // unmarshalTweet parses jsonTweet bytes into Tweet struct.
