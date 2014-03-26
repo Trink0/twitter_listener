@@ -70,12 +70,13 @@ type Queue interface {
 	Start(qc chan *Tweet)
 }
 
-func NewQueue(endPoint string) Queue {
-	return &kestrelQueue{endPoint}
+func NewQueue(endPoint string, queueName string) Queue {
+	return &kestrelQueue{endPoint, queueName}
 }
 
 type kestrelQueue struct {
-	endPoint string
+	endPoint  string
+	queueName string
 }
 
 func (k *kestrelQueue) Start(qc chan *Tweet) {
@@ -87,7 +88,7 @@ func (k *kestrelQueue) Start(qc chan *Tweet) {
 func (k *kestrelQueue) loop(client *memcache.Client, qc chan *Tweet) {
 	for {
 		tweet := <-qc
-		activity := tweet2Activity(tweet)
+		activity := tweetToActivity(tweet)
 		log.Printf("ENQUEUE: %+v", activity)
 		payload, err := json.Marshal(activity)
 		if err != nil {
@@ -95,14 +96,14 @@ func (k *kestrelQueue) loop(client *memcache.Client, qc chan *Tweet) {
 			continue
 		}
 
-		putErr := client.Set(&memcache.Item{Key: "social-web-activities", Value: payload})
+		putErr := client.Set(&memcache.Item{Key: k.queueName, Value: payload})
 		if putErr != nil {
 			log.Printf("ERROR queue: %v", putErr)
 		}
 	}
 }
 
-func tweet2Activity(tweet *Tweet) *Activity {
+func tweetToActivity(tweet *Tweet) *Activity {
 	activity := &Activity{
 		Id:   uuid(),
 		Verb: "TWEET",

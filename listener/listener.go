@@ -17,7 +17,7 @@ func NewListener(app *Application, userIds []string, qc chan *Tweet) Listener {
 }
 
 // StartOne creates and starts one listener for the specified application.
-func StartOne(s Store, appName string) error {
+func StartOne(appName string, s Store, queue Queue) error {
 	app, err := s.GetApp(appName)
 	if err != nil {
 		return err
@@ -32,7 +32,6 @@ func StartOne(s Store, appName string) error {
 	}
 
 	qc := make(chan *Tweet, 100)
-	queue := NewQueue("127.0.0.1:2229")
 	queue.Start(qc)
 
 	c := make(chan int, 1)
@@ -45,7 +44,7 @@ func StartOne(s Store, appName string) error {
 
 // StartAll creates and starts a new listener for each application
 // registered in the store.
-func StartAll(s Store) error {
+func StartAll(s Store, queue Queue) error {
 	appNames, err := s.ListAppNames()
 	if err != nil {
 		return err
@@ -57,7 +56,6 @@ func StartAll(s Store) error {
 
 	c := make(chan int, len(appNames))
 	qc := make(chan *Tweet, len(appNames)*100)
-	queue := NewQueue("127.0.0.1:2229")
 	queue.Start(qc)
 
 	for _, name := range appNames {

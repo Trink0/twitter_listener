@@ -16,6 +16,14 @@ func (l *dummyListener) Start(c chan int) {
 	c <- 1
 }
 
+type dummyQueue struct {
+	qc chan *Tweet
+}
+
+func (d *dummyQueue) Start(c chan *Tweet) {
+	d.qc = c
+}
+
 func TestStartOne(t *testing.T) {
 	store := &dummyStore{}
 	store.getApp = func(name string) (*Application, error) {
@@ -33,11 +41,15 @@ func TestStartOne(t *testing.T) {
 		return dummy
 	}
 
-	if err := StartOne(store, "chumhum"); err != nil {
+	queue := &dummyQueue{}
+	if err := StartOne("chumhum", store, queue); err != nil {
 		t.Fatal(err)
 	}
 	if !dummy.startCalled {
 		t.Error("Didn't call listener.Start()")
+	}
+	if queue.qc == nil {
+		t.Error("Expected queue channel is nil")
 	}
 }
 
@@ -47,9 +59,13 @@ func TestStartAllEmpty(t *testing.T) {
 		return []string{}, nil
 	}
 
-	err := StartAll(store)
+	queue := &dummyQueue{}
+	err := StartAll(store, queue)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if queue.qc != nil {
+		t.Error("Queue channel should be nil")
 	}
 }
 
@@ -73,13 +89,17 @@ func TestStartAll(t *testing.T) {
 		return dummy
 	}
 
-	err := StartAll(store)
+	queue := &dummyQueue{}
+	err := StartAll(store, queue)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if listLen := len(listeners); listLen != 2 {
 		t.Fatalf("Have %d listeners, want 2", listLen)
+	}
+	if queue.qc == nil {
+		t.Error("Expected queue channel is nil")
 	}
 
 	for _, l := range listeners {
