@@ -29,7 +29,7 @@ func TestStartOne(t *testing.T) {
 	}
 
 	dummy := &dummyListener{}
-	listenerFactory = func(app *Application, userIds []string) Listener {
+	listenerFactory = func(app *Application, userIds []string, qc chan *Tweet) Listener {
 		return dummy
 	}
 
@@ -67,7 +67,7 @@ func TestStartAll(t *testing.T) {
 	}
 
 	listeners := make([]*dummyListener, 0)
-	listenerFactory = func(app *Application, userIds []string) Listener {
+	listenerFactory = func(app *Application, userIds []string, qc chan *Tweet) Listener {
 		dummy := &dummyListener{name: app.Name, users: userIds}
 		listeners = append(listeners, dummy)
 		return dummy

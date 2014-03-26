@@ -8,8 +8,13 @@ import (
 	"time"
 )
 
+const (
+	DEFAULT_APP_NAME = "TestAppName"
+	DEFAULT_USER_ID  = "011100"
+)
+
 func TestLoopOneTweet(t *testing.T) {
-	tweet := &Tweet{ID: "123456", Text: "tweet text", User: TweetUser{ID: "011100"}}
+	tweet := &Tweet{ID: "123456", Text: "tweet text", User: TweetUser{ID: DEFAULT_USER_ID}}
 
 	b, _ := json.Marshal(tweet)
 	var buffer bytes.Buffer
@@ -18,11 +23,16 @@ func TestLoopOneTweet(t *testing.T) {
 	fakeStream := bytes.NewReader(buffer.Bytes())
 
 	q := make(chan *Tweet, 1)
-	streamer := &httpStreamer{app: &Application{}, users: []string{"011100"}, queue: q}
+	streamer := &httpStreamer{
+		app:   &Application{Name: DEFAULT_APP_NAME},
+		users: []string{DEFAULT_USER_ID},
+		queue: q,
+	}
 	streamer.loop(fakeStream)
 
 	select {
 	case tweeted := <-q:
+		tweet.AppName = DEFAULT_APP_NAME
 		if !reflect.DeepEqual(tweeted, tweet) {
 			t.Errorf("Have %+v expected %+v", tweeted, tweet)
 		}
@@ -35,7 +45,7 @@ func TestLoopGarbageTweet(t *testing.T) {
 	fakeStream := bytes.NewReader([]byte("garbage tweet"))
 
 	q := make(chan *Tweet, 1)
-	streamer := &httpStreamer{app: &Application{}, users: []string{"011100"}, queue: q}
+	streamer := &httpStreamer{app: &Application{}, users: []string{DEFAULT_USER_ID}, queue: q}
 	streamer.loop(fakeStream)
 
 	select {
@@ -55,7 +65,7 @@ func TestLoopTweetWithNotFollowedUser(t *testing.T) {
 	fakeStream := bytes.NewReader(buffer.Bytes())
 
 	q := make(chan *Tweet, 1)
-	streamer := &httpStreamer{app: &Application{}, users: []string{"011100"}, queue: q}
+	streamer := &httpStreamer{app: &Application{}, users: []string{DEFAULT_USER_ID}, queue: q}
 	streamer.loop(fakeStream)
 
 	select {

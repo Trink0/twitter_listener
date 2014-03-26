@@ -17,6 +17,8 @@ type Tweet struct {
 	Source    string
 	CreatedAt string/*time.Time*/ `json:"created_at"`
 	User      TweetUser
+
+	AppName string
 }
 
 type TweetUser struct {
@@ -36,4 +38,20 @@ type TweetEntityUrl struct {
 
 // Activity is a Beancounter Activity object being pushed down the queue.
 type Activity struct {
+}
+
+type Queue interface {
+	Start(qc chan *Tweet)
+}
+
+func NewQueue(endPoint string) Queue {
+	return &kestrelQueue{endPoint}
+}
+
+type kestrelQueue struct {
+	endPoint string
+}
+
+func (k *kestrelQueue) Start(qc chan *Tweet) {
+	//...
 }

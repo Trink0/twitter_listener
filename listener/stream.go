@@ -134,7 +134,7 @@ func (s *httpStreamer) digest(tweet *Tweet) {
 	if tweet == nil || !isInList(s.users, tweet.User.ID) {
 		return
 	}
-
+	tweet.AppName = s.app.Name
 	log.Printf("%v", tweet)
 	s.queue <- tweet
 }
