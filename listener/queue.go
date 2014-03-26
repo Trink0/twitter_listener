@@ -2,12 +2,10 @@ package listener
 
 import (
 	"encoding/json"
-	// "errors"
 	"log"
-	// "strconv"
-	// "strings"
+	"time"
 
-	"github.com/alindeman/go-kestrel"
+	"github.com/bradfitz/gomemcache/memcache"
 )
 
 // Tweet is what Twitter sends back as stream items.
@@ -27,6 +25,10 @@ type Tweet struct {
 	AppName string
 }
 
+func (t *Tweet) statusUrl() string {
+	return "https://twitter.com/" + t.User.ScreenName + "/statuses/" + t.ID
+}
+
 type TweetUser struct {
 	ID         string `json:"id_str"`
 	ScreenName string `json:"screen_name"`
@@ -44,6 +46,24 @@ type TweetEntityUrl struct {
 
 // Activity is a Beancounter Activity object being pushed down the queue.
 type Activity struct {
+	Id              string          `json:"id"`
+	Verb            string          `json:"verb"`
+	Object          ActivityObject  `json:"object"`
+	Context         ActivityContext `json:"context"`
+	ApplicationName string          `json:"applicationName"`
+}
+
+type ActivityObject struct {
+	Type string   `json:"type"`
+	URL  string   `json:"url"`
+	Text string   `json:"text"`
+	Urls []string `json:"urls"`
+}
+
+type ActivityContext struct {
+	Service  string `json:"service"`
+	Username string `json:"username"`
+	Date     int64  `json:"date"`
 }
 
 type Queue interface {
@@ -51,49 +71,59 @@ type Queue interface {
 }
 
 func NewQueue(endPoint string) Queue {
-	// ep := strings.SplitN(endPoint, ":", 2)
-	// if ep[0] == "" {
-	// 	return nil, errors.New("Invalid queue host")
-	// }
-	// port := 2229
-	// if len(ep) == 2 {
-	// 	port, portErr := strconv.Atoi(ep[1])
-	// 	if portErr != nil {
-	// 		return nil, portErr
-	// 	}
-	// }
-	// return &kestrelQueue{ep[0], port}, nil
-	return &kestrelQueue{"127.0.0.1", 2229}
+	return &kestrelQueue{endPoint}
 }
 
 type kestrelQueue struct {
-	host string
-	port int
+	endPoint string
 }
 
 func (k *kestrelQueue) Start(qc chan *Tweet) {
-	log.Printf("Connecting to Kestrel on %s:%d", k.host, k.port)
-	client := kestrel.NewClient(k.host, k.port)
+	log.Printf("Connecting to Kestrel on %s", k.endPoint)
+	client := memcache.New(k.endPoint)
 	go k.loop(client, qc)
 }
 
-func (k *kestrelQueue) loop(client *kestrel.Client, qc chan *Tweet) {
+func (k *kestrelQueue) loop(client *memcache.Client, qc chan *Tweet) {
 	for {
 		tweet := <-qc
-		log.Printf("ENQUEUE: %+v", tweet)
-		payload, err := json.Marshal(tweet)
+		activity := tweet2Activity(tweet)
+		log.Printf("ENQUEUE: %+v", activity)
+		payload, err := json.Marshal(activity)
 		if err != nil {
 			log.Printf("ERROR encoding activity: %v", err)
 			continue
 		}
 
-		n, putErr := client.Put("social-web-activities", [][]byte{payload})
+		putErr := client.Set(&memcache.Item{Key: "social-web-activities", Value: payload})
 		if putErr != nil {
 			log.Printf("ERROR queue: %v", putErr)
-			continue
-		}
-		if n < 1 {
-			log.Println("ERROR: unable to put")
 		}
 	}
+}
+
+func tweet2Activity(tweet *Tweet) *Activity {
+	activity := &Activity{
+		Id:   uuid(),
+		Verb: "TWEET",
+		Object: ActivityObject{
+			Type: "TWEET",
+			URL:  tweet.statusUrl(),
+			Text: tweet.Text,
+		},
+		Context: ActivityContext{
+			Service:  "twitter",
+			Username: tweet.User.ID,
+		},
+		ApplicationName: tweet.AppName,
+	}
+	createdAt, _ := time.Parse(time.RubyDate, tweet.CreatedAt)
+	activity.Context.Date = createdAt.UnixNano() / 1E6
+
+	activity.Object.Urls = make([]string, len(tweet.Entities.URLs))
+	for i, entityUrl := range tweet.Entities.URLs {
+		activity.Object.Urls[i] = entityUrl.ExpandedURL
+	}
+
+	return activity
 }
