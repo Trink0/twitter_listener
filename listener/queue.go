@@ -1,7 +1,13 @@
 package listener
 
 import (
-// "time"
+	"encoding/json"
+	// "errors"
+	"log"
+	// "strconv"
+	// "strings"
+
+	"github.com/alindeman/go-kestrel"
 )
 
 // Tweet is what Twitter sends back as stream items.
@@ -45,13 +51,49 @@ type Queue interface {
 }
 
 func NewQueue(endPoint string) Queue {
-	return &kestrelQueue{endPoint}
+	// ep := strings.SplitN(endPoint, ":", 2)
+	// if ep[0] == "" {
+	// 	return nil, errors.New("Invalid queue host")
+	// }
+	// port := 2229
+	// if len(ep) == 2 {
+	// 	port, portErr := strconv.Atoi(ep[1])
+	// 	if portErr != nil {
+	// 		return nil, portErr
+	// 	}
+	// }
+	// return &kestrelQueue{ep[0], port}, nil
+	return &kestrelQueue{"127.0.0.1", 2229}
 }
 
 type kestrelQueue struct {
-	endPoint string
+	host string
+	port int
 }
 
 func (k *kestrelQueue) Start(qc chan *Tweet) {
-	//...
+	log.Printf("Connecting to Kestrel on %s:%d", k.host, k.port)
+	client := kestrel.NewClient(k.host, k.port)
+	go k.loop(client, qc)
+}
+
+func (k *kestrelQueue) loop(client *kestrel.Client, qc chan *Tweet) {
+	for {
+		tweet := <-qc
+		log.Printf("ENQUEUE: %+v", tweet)
+		payload, err := json.Marshal(tweet)
+		if err != nil {
+			log.Printf("ERROR encoding activity: %v", err)
+			continue
+		}
+
+		n, putErr := client.Put("social-web-activities", [][]byte{payload})
+		if putErr != nil {
+			log.Printf("ERROR queue: %v", putErr)
+			continue
+		}
+		if n < 1 {
+			log.Println("ERROR: unable to put")
+		}
+	}
 }

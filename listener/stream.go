@@ -135,7 +135,6 @@ func (s *httpStreamer) digest(tweet *Tweet) {
 		return
 	}
 	tweet.AppName = s.app.Name
-	log.Printf("%v", tweet)
 	s.queue <- tweet
 }
 

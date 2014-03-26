@@ -32,7 +32,7 @@ func StartOne(s Store, appName string) error {
 	}
 
 	qc := make(chan *Tweet, 100)
-	queue := NewQueue("192.168.10.10:9999")
+	queue := NewQueue("127.0.0.1:2229")
 	queue.Start(qc)
 
 	c := make(chan int, 1)
@@ -57,7 +57,7 @@ func StartAll(s Store) error {
 
 	c := make(chan int, len(appNames))
 	qc := make(chan *Tweet, len(appNames)*100)
-	queue := NewQueue("192.168.10.10:9999")
+	queue := NewQueue("127.0.0.1:2229")
 	queue.Start(qc)
 
 	for _, name := range appNames {
