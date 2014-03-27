@@ -1,5 +1,9 @@
 package listener
 
+import (
+	"github.com/fiorix/go-redis/redis"
+)
+
 // Application is a customer/merchant
 type Application struct {
 	ApiKey           string `json:"apiKey"`
@@ -26,4 +30,5 @@ type Store interface {
 	// ListTwitterIDs returns Twitter IDs of all users that belong to an app
 	// identified by the given name.
 	ListTwitterIDs(name string) ([]string, error)
+	Subscribe(topic string, msg chan redis.PubSubMessage, stop chan bool) error
 }

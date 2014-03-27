@@ -9,6 +9,8 @@ type Listener interface {
 	// Start initiates a connection and reads from it indefinitely in a goroutine
 	// c is a control channel used by the listener to communicate an exit error.
 	Start(c chan int)
+	Restart(c chan int)
+	Name() string
 }
 
 // NewListener creates a new listener with credentials provided by the app.
@@ -34,12 +36,15 @@ func StartOne(appName string, s Store, queue Queue) error {
 	qc := make(chan *Tweet, 100)
 	queue.Start(qc)
 
-	c := make(chan int, 1)
+	errc := make(chan int, 1)
 	listener := NewListener(app, userIDs, qc)
-	listener.Start(c)
+	listener.Start(errc)
 
-	waitAll(c, 1)
-	return nil
+	aw := NewAppWatcher("topic", []Listener{listener}, s)
+	return aw.Watch(qc, errc)
+
+	// waitAll(c, 1)
+	// return nil
 }
 
 // StartAll creates and starts a new listener for each application

@@ -3,17 +3,29 @@ package listener
 import (
 	"reflect"
 	"testing"
+
+	"github.com/fiorix/go-redis/redis"
 )
 
 type dummyListener struct {
 	name        string
 	users       []string
 	startCalled bool
+	stopCalled  bool
 }
 
 func (l *dummyListener) Start(c chan int) {
 	l.startCalled = true
 	c <- 1
+}
+
+func (l *dummyListener) Restart(c chan int) {
+	l.stopCalled = true
+	l.Start(c)
+}
+
+func (l *dummyListener) Name() string {
+	return l.name
 }
 
 type dummyQueue struct {
@@ -34,6 +46,9 @@ func TestStartOne(t *testing.T) {
 	}
 	store.listTwitterIDs = func(name string) ([]string, error) {
 		return []string{"15170239", "1585341620"}, nil
+	}
+	store.subscribe = func(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
+		return nil
 	}
 
 	dummy := &dummyListener{}

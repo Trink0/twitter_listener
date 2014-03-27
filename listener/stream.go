@@ -29,19 +29,34 @@ type httpStreamer struct {
 	app   *Application
 	users []string
 	queue chan *Tweet
+	stopc chan bool
 }
 
-func (s *httpStreamer) Start(c chan int) {
+func (s *httpStreamer) Name() string {
+	return s.app.Name
+}
+
+func (s *httpStreamer) Start(errc chan int) {
+	if s.stopc != nil {
+		log.Printf("Listner %s already started", s.app.Name)
+		return
+	}
+	s.stopc = make(chan bool)
 	sort.Strings(s.users)
 	log.Printf("Starting listener %q (%d users)", s.app.Name, len(s.users))
 	log.Printf("DEBUG %s: %v", s.app.Name, s.users)
-	go s.stream(c)
+	go s.stream(errc)
+}
+func (s *httpStreamer) Restart(errc chan int) {
+	s.stopc <- true
+	s.stopc = nil
+	s.Start(errc)
 }
 
 // stream initiates streaming connection and starts receiving in an infinite loop.
-func (s *httpStreamer) stream(c chan int) {
+func (s *httpStreamer) stream(errc chan int) {
 	defer func() {
-		c <- 1
+		errc <- 1
 	}()
 
 	reader, err := s.open()
@@ -101,30 +116,37 @@ func (s *httpStreamer) loop(stream io.Reader) {
 		buf     bytes.Buffer
 		lastIdx = 0
 	)
+LOOP:
 	for {
-		n, err := stream.Read(p)
-		if n > 0 {
-			buf.Write(p[:n])
-			body := buf.Bytes()
-			if i := bytes.Index(body[lastIdx:], endOfTweet); i >= 0 {
-				i += lastIdx
-				go s.digest(unmarshalTweet(body[:i+lenEOT-1]))
-				buf.Truncate(0)
-				buf.Write(body[i+lenEOT:])
-				lastIdx = 0
-			} else {
-				lastIdx = len(body) - lenEOT
-				if lastIdx < 0 {
+		select {
+		case <-s.stopc:
+			break LOOP
+		default:
+			n, err := stream.Read(p)
+			if n > 0 {
+				buf.Write(p[:n])
+				body := buf.Bytes()
+				if i := bytes.Index(body[lastIdx:], endOfTweet); i >= 0 {
+					i += lastIdx
+					go s.digest(unmarshalTweet(body[:i+lenEOT-1]))
+					buf.Truncate(0)
+					buf.Write(body[i+lenEOT:])
 					lastIdx = 0
+				} else {
+					lastIdx = len(body) - lenEOT
+					if lastIdx < 0 {
+						lastIdx = 0
+					}
 				}
 			}
-		}
 
-		if err != nil {
-			log.Printf("%q stream: %v", s.app.Name, err)
-			break
+			if err != nil {
+				log.Printf("%q stream: %v", s.app.Name, err)
+				break LOOP
+			}
 		}
 	}
+
 }
 
 // digest pushes the tweet to a processing queue or silently ignores it

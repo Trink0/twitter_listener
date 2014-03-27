@@ -77,6 +77,10 @@ func (s *redisStore) ListTwitterIDs(name string) ([]string, error) {
 	//return []string{ /*"172658547",*/ "1585341620"}, nil
 }
 
+func (s *redisStore) Subscribe(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
+	return s.newClient(s.appDB).Subscribe(topic, msg, stop)
+}
+
 func (s *redisStore) connectionURL(db int) string {
 	return fmt.Sprintf("%s db=%d", s.dbURL, db)
 }
