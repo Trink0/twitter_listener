@@ -32,7 +32,7 @@ func TestQueueLoop(t *testing.T) {
 		Text: TEST_TEXT_TWEET,
 	}
 	qc <- tweet
-	time.Sleep(time.Millisecond)
+	time.Sleep(time.Millisecond * 10)
 	if !isCalled {
 		t.Fatal("Loop func not called")
 	}
