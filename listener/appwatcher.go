@@ -69,14 +69,22 @@ func (a *AppWatcher) loop(msgc chan redis.PubSubMessage, qc chan *Tweet, errc ch
 }
 
 // waitAll reads from the
-func (a *AppWatcher) waitAll(c chan int) {
-	count := len(a.listeners)
+func (a *AppWatcher) waitAll(errc chan int) {
 	for {
-		status := <-c
+		status := <-errc
 		log.Printf("Listener exited with status %d", status)
-		if count -= 1; count == 0 {
+		if !a.hasActiveListeners() {
 			log.Printf("Quit application")
-			break
+			return
 		}
 	}
+}
+
+func (a *AppWatcher) hasActiveListeners() bool {
+	for _, l := range a.listeners {
+		if l.IsActive() {
+			return true
+		}
+	}
+	return false
 }

@@ -36,8 +36,12 @@ func (s *httpStreamer) Name() string {
 	return s.app.Name
 }
 
+func (s *httpStreamer) IsActive() bool {
+	return s.stopc != nil
+}
+
 func (s *httpStreamer) Start(errc chan int) {
-	if s.stopc != nil {
+	if s.IsActive() {
 		log.Printf("Listner %s already started", s.app.Name)
 		return
 	}
@@ -47,9 +51,14 @@ func (s *httpStreamer) Start(errc chan int) {
 	log.Printf("DEBUG %s: %v", s.app.Name, s.users)
 	go s.stream(errc)
 }
-func (s *httpStreamer) Restart(errc chan int) {
+
+func (s *httpStreamer) Stop() {
 	s.stopc <- true
 	s.stopc = nil
+}
+
+func (s *httpStreamer) Restart(errc chan int) {
+	s.Stop()
 	s.Start(errc)
 }
 

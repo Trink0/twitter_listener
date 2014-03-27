@@ -9,7 +9,9 @@ type Listener interface {
 	// Start initiates a connection and reads from it indefinitely in a goroutine
 	// c is a control channel used by the listener to communicate an exit error.
 	Start(c chan int)
+	Stop()
 	Restart(c chan int)
+	IsActive() bool
 	Name() string
 }
 

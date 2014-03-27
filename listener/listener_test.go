@@ -19,9 +19,17 @@ func (l *dummyListener) Start(c chan int) {
 	c <- 1
 }
 
-func (l *dummyListener) Restart(c chan int) {
+func (l *dummyListener) Stop() {
 	l.stopCalled = true
+}
+
+func (l *dummyListener) Restart(c chan int) {
+	l.Stop()
 	l.Start(c)
+}
+
+func (l *dummyListener) IsActive() bool {
+	return false
 }
 
 func (l *dummyListener) Name() string {

@@ -73,8 +73,8 @@ func (s *redisStore) ListTwitterIDs(name string) ([]string, error) {
 		}
 	}
 
+	twitterIDs = []string{"172658547", "1585341620"}
 	return twitterIDs, nil
-	//return []string{ /*"172658547",*/ "1585341620"}, nil
 }
 
 func (s *redisStore) Subscribe(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
