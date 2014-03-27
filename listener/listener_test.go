@@ -12,20 +12,21 @@ type dummyListener struct {
 	users       []string
 	startCalled bool
 	stopCalled  bool
+	c           chan int
 }
 
-func (l *dummyListener) Start(c chan int) {
+func (l *dummyListener) Start() {
 	l.startCalled = true
-	c <- 1
+	l.c <- 1
 }
 
 func (l *dummyListener) Stop() {
 	l.stopCalled = true
 }
 
-func (l *dummyListener) Restart(c chan int) {
+func (l *dummyListener) Restart() {
 	l.Stop()
-	l.Start(c)
+	l.Start()
 }
 
 func (l *dummyListener) IsActive() bool {
@@ -60,7 +61,8 @@ func TestStartOne(t *testing.T) {
 	}
 
 	dummy := &dummyListener{}
-	listenerFactory = func(app *Application, userIds []string, qc chan *Tweet) Listener {
+	listenerFactory = func(app *Application, userIds []string, qc chan *Tweet, c chan int) Listener {
+		dummy.c = c
 		return dummy
 	}
 
@@ -109,8 +111,8 @@ func TestStartAll(t *testing.T) {
 	}
 
 	listeners := make([]*dummyListener, 0)
-	listenerFactory = func(app *Application, userIds []string, qc chan *Tweet) Listener {
-		dummy := &dummyListener{name: app.Name, users: userIds}
+	listenerFactory = func(app *Application, userIds []string, qc chan *Tweet, c chan int) Listener {
+		dummy := &dummyListener{name: app.Name, users: userIds, c: c}
 		listeners = append(listeners, dummy)
 		return dummy
 	}

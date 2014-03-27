@@ -60,10 +60,10 @@ func (a *AppWatcher) loop(msgc chan redis.PubSubMessage, qc chan *Tweet, errc ch
 				log.Printf("No users found for app %q. Exiting.", appName)
 				continue
 			}
-			listener = NewListener(app, userIDs, qc)
+			listener = NewListener(app, userIDs, qc, errc)
 			a.listeners = append(a.listeners, listener)
 		}
-		listener.Restart(errc)
+		listener.Restart()
 	}
 
 }

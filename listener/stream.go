@@ -30,6 +30,7 @@ type httpStreamer struct {
 	users []string
 	queue chan *Tweet
 	stopc chan bool
+	errc  chan int
 }
 
 func (s *httpStreamer) Name() string {
@@ -40,7 +41,7 @@ func (s *httpStreamer) IsActive() bool {
 	return s.stopc != nil
 }
 
-func (s *httpStreamer) Start(errc chan int) {
+func (s *httpStreamer) Start() {
 	if s.IsActive() {
 		log.Printf("Listner %s already started", s.app.Name)
 		return
@@ -49,7 +50,7 @@ func (s *httpStreamer) Start(errc chan int) {
 	sort.Strings(s.users)
 	log.Printf("Starting listener %q (%d users)", s.app.Name, len(s.users))
 	log.Printf("DEBUG %s: %v", s.app.Name, s.users)
-	go s.stream(errc)
+	go s.stream()
 }
 
 func (s *httpStreamer) Stop() {
@@ -57,15 +58,15 @@ func (s *httpStreamer) Stop() {
 	s.stopc = nil
 }
 
-func (s *httpStreamer) Restart(errc chan int) {
+func (s *httpStreamer) Restart() {
 	s.Stop()
-	s.Start(errc)
+	s.Start()
 }
 
 // stream initiates streaming connection and starts receiving in an infinite loop.
-func (s *httpStreamer) stream(errc chan int) {
+func (s *httpStreamer) stream() {
 	defer func() {
-		errc <- 1
+		s.errc <- 1
 	}()
 
 	reader, err := s.open()
@@ -129,7 +130,7 @@ LOOP:
 	for {
 		select {
 		case <-s.stopc:
-			break LOOP
+			return
 		default:
 			n, err := stream.Read(p)
 			if n > 0 {
@@ -155,7 +156,7 @@ LOOP:
 			}
 		}
 	}
-
+	s.Restart()
 }
 
 // digest pushes the tweet to a processing queue or silently ignores it

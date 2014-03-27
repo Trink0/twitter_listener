@@ -5,24 +5,22 @@ import (
 )
 
 const (
-	APP_TOPIC  = "app"
-	USER_TOPIC = "user"
+	APP_TOPIC = "app"
 )
 
 // Listener is a Twitter Streaming API client.
 type Listener interface {
 	// Start initiates a connection and reads from it indefinitely in a goroutine
-	// c is a control channel used by the listener to communicate an exit error.
-	Start(c chan int)
+	Start()
 	Stop()
-	Restart(c chan int)
+	Restart()
 	IsActive() bool
 	Name() string
 }
 
 // NewListener creates a new listener with credentials provided by the app.
-func NewListener(app *Application, userIds []string, qc chan *Tweet) Listener {
-	return listenerFactory(app, userIds, qc)
+func NewListener(app *Application, userIds []string, qc chan *Tweet, errc chan int) Listener {
+	return listenerFactory(app, userIds, qc, errc)
 }
 
 // StartOne creates and starts one listener for the specified application.
@@ -44,8 +42,8 @@ func StartOne(appName string, s Store, queue Queue) error {
 	queue.Start(qc)
 
 	errc := make(chan int, 1)
-	listener := NewListener(app, userIDs, qc)
-	listener.Start(errc)
+	listener := NewListener(app, userIDs, qc, errc)
+	listener.Start()
 
 	aw := NewAppWatcher(APP_TOPIC, []Listener{listener}, s)
 	return aw.Watch(qc, errc)
@@ -80,9 +78,9 @@ func StartAll(s Store, queue Queue) error {
 			return userErr
 		}
 
-		listener := NewListener(storedApp, userIDs, qc)
+		listener := NewListener(storedApp, userIDs, qc, errc)
 		allListeners = append(allListeners, listener)
-		listener.Start(errc)
+		listener.Start()
 	}
 	aw := NewAppWatcher(APP_TOPIC, allListeners, s)
 	return aw.Watch(qc, errc)
@@ -90,6 +88,6 @@ func StartAll(s Store, queue Queue) error {
 
 // listenerFactory is by NewListener to create a new listener struct.
 // Meant overwritten in tests.
-var listenerFactory = func(a *Application, userIds []string, qc chan *Tweet) Listener {
-	return &httpStreamer{app: a, users: userIds, queue: qc}
+var listenerFactory = func(a *Application, userIds []string, qc chan *Tweet, errc chan int) Listener {
+	return &httpStreamer{app: a, users: userIds, queue: qc, errc: errc}
 }

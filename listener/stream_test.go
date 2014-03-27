@@ -27,6 +27,8 @@ func TestLoopOneTweet(t *testing.T) {
 		app:   &Application{Name: DEFAULT_APP_NAME},
 		users: []string{DEFAULT_USER_ID},
 		queue: q,
+		stopc: make(chan bool, 1),
+		errc:  make(chan int, 1),
 	}
 	streamer.loop(fakeStream)
 
@@ -45,7 +47,13 @@ func TestLoopGarbageTweet(t *testing.T) {
 	fakeStream := bytes.NewReader([]byte("garbage tweet"))
 
 	q := make(chan *Tweet, 1)
-	streamer := &httpStreamer{app: &Application{}, users: []string{DEFAULT_USER_ID}, queue: q}
+	streamer := &httpStreamer{
+		app:   &Application{},
+		users: []string{DEFAULT_USER_ID},
+		queue: q,
+		stopc: make(chan bool, 1),
+		errc:  make(chan int, 1),
+	}
 	streamer.loop(fakeStream)
 
 	select {
@@ -65,7 +73,13 @@ func TestLoopTweetWithNotFollowedUser(t *testing.T) {
 	fakeStream := bytes.NewReader(buffer.Bytes())
 
 	q := make(chan *Tweet, 1)
-	streamer := &httpStreamer{app: &Application{}, users: []string{DEFAULT_USER_ID}, queue: q}
+	streamer := &httpStreamer{
+		app:   &Application{},
+		users: []string{DEFAULT_USER_ID},
+		queue: q,
+		stopc: make(chan bool, 1),
+		errc:  make(chan int, 1),
+	}
 	streamer.loop(fakeStream)
 
 	select {
