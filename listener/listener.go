@@ -4,6 +4,11 @@ import (
 	"log"
 )
 
+const (
+	APP_TOPIC  = "app"
+	USER_TOPIC = "user"
+)
+
 // Listener is a Twitter Streaming API client.
 type Listener interface {
 	// Start initiates a connection and reads from it indefinitely in a goroutine
@@ -42,11 +47,8 @@ func StartOne(appName string, s Store, queue Queue) error {
 	listener := NewListener(app, userIDs, qc)
 	listener.Start(errc)
 
-	aw := NewAppWatcher("topic", []Listener{listener}, s)
+	aw := NewAppWatcher(APP_TOPIC, []Listener{listener}, s)
 	return aw.Watch(qc, errc)
-
-	// waitAll(c, 1)
-	// return nil
 }
 
 // StartAll creates and starts a new listener for each application
@@ -61,10 +63,11 @@ func StartAll(s Store, queue Queue) error {
 		return nil
 	}
 
-	c := make(chan int, len(appNames))
+	errc := make(chan int, len(appNames))
 	qc := make(chan *Tweet, len(appNames)*100)
 	queue.Start(qc)
 
+	allListeners := make([]Listener, 0, len(appNames))
 	for _, name := range appNames {
 		storedApp, getErr := s.GetApp(name)
 		if getErr != nil {
@@ -78,24 +81,11 @@ func StartAll(s Store, queue Queue) error {
 		}
 
 		listener := NewListener(storedApp, userIDs, qc)
-		listener.Start(c)
+		allListeners = append(allListeners, listener)
+		listener.Start(errc)
 	}
-
-	waitAll(c, len(appNames))
-	return nil
-}
-
-// waitAll reads from the
-func waitAll(c chan int, n int) {
-	count := 0
-	for {
-		status := <-c
-		log.Printf("Listener exited with status %d", status)
-		if count += 1; count == n {
-			log.Printf("Quit application")
-			break
-		}
-	}
+	aw := NewAppWatcher(APP_TOPIC, allListeners, s)
+	return aw.Watch(qc, errc)
 }
 
 // listenerFactory is by NewListener to create a new listener struct.

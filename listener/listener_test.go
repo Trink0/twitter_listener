@@ -104,6 +104,9 @@ func TestStartAll(t *testing.T) {
 	store.listTwitterIDs = func(name string) ([]string, error) {
 		return twitterIDs, nil
 	}
+	store.subscribe = func(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
+		return nil
+	}
 
 	listeners := make([]*dummyListener, 0)
 	listenerFactory = func(app *Application, userIds []string, qc chan *Tweet) Listener {
