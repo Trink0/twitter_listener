@@ -104,7 +104,6 @@ func (k *kestrelQueue) loop(qc chan *Tweet) {
 		}
 
 		k.putFn(payload)
-
 	}
 }
 
