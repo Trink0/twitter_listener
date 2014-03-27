@@ -32,7 +32,7 @@ func main() {
 	}
 
 	store := listener.NewStore(dbURL, appDB, userDB)
-	queue := NewQueue(queueURL, queueName)
+	queue := listener.NewQueue(queueURL, queueName)
 
 	var startErr error
 	if appName := flag.Arg(0); appName != "" {
