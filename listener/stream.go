@@ -15,7 +15,7 @@ import (
 )
 
 // filterURL is Twitter Filter Streaming API endpoint
-const filterURL = "https://stream.twitter.com/1.1/statuses/filter.json"
+var filterURL = "https://stream.twitter.com/1.1/statuses/filter.json"
 
 var (
 	// endOfTweet is a tweet delimiter in the stream.

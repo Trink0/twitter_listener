@@ -11,9 +11,11 @@ import (
 const (
 	DEFAULT_APP_NAME = "TestAppName"
 	DEFAULT_USER_ID  = "011100"
+	TEST_FILTER_URL  = "Test Filter Url"
 )
 
 func TestLoopOneTweet(t *testing.T) {
+	filterURL = TEST_FILTER_URL
 	tweet := &Tweet{ID: "123456", Text: "tweet text", User: TweetUser{ID: DEFAULT_USER_ID}}
 
 	b, _ := json.Marshal(tweet)
@@ -44,6 +46,7 @@ func TestLoopOneTweet(t *testing.T) {
 
 }
 func TestLoopGarbageTweet(t *testing.T) {
+	filterURL = TEST_FILTER_URL
 	fakeStream := bytes.NewReader([]byte("garbage tweet"))
 
 	q := make(chan *Tweet, 1)
@@ -64,6 +67,7 @@ func TestLoopGarbageTweet(t *testing.T) {
 	}
 }
 func TestLoopTweetWithNotFollowedUser(t *testing.T) {
+	filterURL = TEST_FILTER_URL
 	tweet := &Tweet{ID: "123456", Text: "tweet text", User: TweetUser{ID: "4444444"}}
 
 	b, _ := json.Marshal(tweet)
