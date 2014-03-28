@@ -4,9 +4,8 @@ import (
 	"log"
 )
 
-const (
-	APP_TOPIC = "app"
-)
+// APP_TOPIC is Redis channel name
+const APP_TOPIC = "appchanges"
 
 // Listener is a Twitter Streaming API client.
 type Listener interface {
