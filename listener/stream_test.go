@@ -40,7 +40,7 @@ func TestLoopOneTweet(t *testing.T) {
 		if !reflect.DeepEqual(tweeted, tweet) {
 			t.Errorf("Have %+v expected %+v", tweeted, tweet)
 		}
-	case <-time.Tick(time.Millisecond):
+	case <-time.Tick(time.Millisecond * 5):
 		t.Fatal("Exepected message but received nothing")
 	}
 
@@ -62,7 +62,7 @@ func TestLoopGarbageTweet(t *testing.T) {
 	select {
 	case tweeted := <-q:
 		t.Errorf("Didn't expect %+v", tweeted)
-	case <-time.Tick(time.Millisecond):
+	case <-time.Tick(time.Millisecond * 5):
 		// test pass
 	}
 }
@@ -89,7 +89,7 @@ func TestLoopTweetWithNotFollowedUser(t *testing.T) {
 	select {
 	case tweeted := <-q:
 		t.Errorf("Didn't expect %+v", tweeted)
-	case <-time.Tick(time.Millisecond):
+	case <-time.Tick(time.Millisecond * 5):
 		// test pass
 	}
 }
