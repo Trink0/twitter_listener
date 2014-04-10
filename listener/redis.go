@@ -73,7 +73,6 @@ func (s *redisStore) ListTwitterIDs(name string) ([]string, error) {
 		}
 	}
 
-	twitterIDs = []string{"172658547", "1585341620"}
 	return twitterIDs, nil
 }
 
