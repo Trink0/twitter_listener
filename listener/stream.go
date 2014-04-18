@@ -54,12 +54,16 @@ func (s *httpStreamer) Start() {
 }
 
 func (s *httpStreamer) Stop() {
+	log.Printf("Stopping listener: %q", s.app.Name)
 	s.stopc <- true
 	s.stopc = nil
 }
 
 func (s *httpStreamer) Restart() {
-	s.Stop()
+	log.Printf("Restarting listener: %q", s.app.Name)
+	if s.stopc != nil {
+		s.Stop()
+	}
 	s.Start()
 }
 
@@ -72,7 +76,7 @@ func (s *httpStreamer) stream() {
 	reader, err := s.open()
 	if err != nil {
 		log.Printf("ERROR opening stream for %q: %v", s.app.Name, err)
-		return
+		return s.Stop()
 	}
 	defer reader.Close()
 
