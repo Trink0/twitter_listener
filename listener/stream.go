@@ -76,7 +76,8 @@ func (s *httpStreamer) stream() {
 	reader, err := s.open()
 	if err != nil {
 		log.Printf("ERROR opening stream for %q: %v", s.app.Name, err)
-		return s.Stop()
+		s.Stop()
+		return
 	}
 	defer reader.Close()
 
