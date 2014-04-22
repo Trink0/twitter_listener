@@ -56,12 +56,11 @@ func (s *httpStreamer) Start() {
 func (s *httpStreamer) Stop() {
 	log.Printf("Stopping listener: %q", s.app.Name)
 	s.stopc <- true
-	s.stopc = nil
 }
 
 func (s *httpStreamer) Restart() {
 	log.Printf("Restarting listener: %q", s.app.Name)
-	if s.stopc != nil {
+	if s.IsActive() {
 		s.Stop()
 	}
 	s.Start()
@@ -76,7 +75,7 @@ func (s *httpStreamer) stream() {
 	reader, err := s.open()
 	if err != nil {
 		log.Printf("ERROR opening stream for %q: %v", s.app.Name, err)
-		s.Stop()
+		s.stopc = nil
 		return
 	}
 	defer reader.Close()
@@ -135,6 +134,8 @@ LOOP:
 	for {
 		select {
 		case <-s.stopc:
+			log.Printf("Nulling stop channel")
+			s.stopc = nil
 			return
 		default:
 			n, err := stream.Read(p)
