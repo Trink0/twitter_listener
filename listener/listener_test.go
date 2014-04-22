@@ -37,6 +37,10 @@ func (l *dummyListener) Name() string {
 	return l.name
 }
 
+func (l *dummyListener) UpdateApp(app *Application) {}
+
+func (l *dummyListener) UpdateUsers(users []string) {}
+
 type dummyQueue struct {
 	qc chan *Tweet
 }

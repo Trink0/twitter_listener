@@ -41,6 +41,14 @@ func (s *httpStreamer) IsActive() bool {
 	return s.stopc != nil
 }
 
+func (s *httpStreamer) UpdateUsers(userIds []string) {
+	s.users = userIds
+}
+
+func (s *httpStreamer) UpdateApp(app *Application) {
+	s.app = app
+}
+
 func (s *httpStreamer) Start() {
 	if s.IsActive() {
 		log.Printf("Listner %s already started", s.app.Name)
@@ -50,7 +58,7 @@ func (s *httpStreamer) Start() {
 	sort.Strings(s.users)
 	log.Printf("Starting listener %q (%d users)", s.app.Name, len(s.users))
 	log.Printf("DEBUG %s: %v", s.app.Name, s.users)
-	go s.stream()
+	s.stream()
 }
 
 func (s *httpStreamer) Stop() {
@@ -66,6 +74,11 @@ func (s *httpStreamer) Restart() {
 	s.Start()
 }
 
+func (s *httpStreamer) resetStopChannel() {
+	log.Printf("Resetting stop channel: %q", s.app.Name)
+	s.stopc = nil
+}
+
 // stream initiates streaming connection and starts receiving in an infinite loop.
 func (s *httpStreamer) stream() {
 	defer func() {
@@ -75,7 +88,7 @@ func (s *httpStreamer) stream() {
 	reader, err := s.open()
 	if err != nil {
 		log.Printf("ERROR opening stream for %q: %v", s.app.Name, err)
-		s.stopc = nil
+		s.resetStopChannel()
 		return
 	}
 	defer reader.Close()
@@ -134,8 +147,7 @@ LOOP:
 	for {
 		select {
 		case <-s.stopc:
-			log.Printf("Nulling stop channel")
-			s.stopc = nil
+			s.resetStopChannel()
 			return
 		default:
 			n, err := stream.Read(p)
@@ -158,6 +170,7 @@ LOOP:
 
 			if err != nil {
 				log.Printf("%q stream: %v", s.app.Name, err)
+				s.resetStopChannel()
 				break LOOP
 			}
 		}

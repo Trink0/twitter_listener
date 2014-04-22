@@ -93,3 +93,23 @@ func TestLoopTweetWithNotFollowedUser(t *testing.T) {
 		// test pass
 	}
 }
+
+func TestUpdateUsers(t *testing.T) {
+	q := make(chan *Tweet, 1)
+	streamer := &httpStreamer{
+		app:   &Application{},
+		users: []string{DEFAULT_USER_ID},
+		queue: q,
+		stopc: make(chan bool, 1),
+		errc:  make(chan int, 1),
+	}
+	users_upd := []string{"aaa-bbb", "ccc-ddd"}
+	streamer.UpdateUsers(users_upd)
+
+	if len(streamer.users) != 2 {
+		t.Fatal("Expected 2 elements in users")
+	}
+	if streamer.users[0] != "aaa-bbb" || streamer.users[1] != "ccc-ddd" {
+		t.Fatalf("unexpected values: %+v %+v", streamer.users[0], streamer.users[1])
+	}
+}

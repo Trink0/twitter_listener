@@ -15,6 +15,8 @@ type Listener interface {
 	Restart()
 	IsActive() bool
 	Name() string
+	UpdateUsers(userIds []string)
+	UpdateApp(app *Application)
 }
 
 // NewListener creates a new listener with credentials provided by the app.
@@ -79,7 +81,7 @@ func StartAll(s Store, queue Queue) error {
 
 		listener := NewListener(storedApp, userIDs, qc, errc)
 		allListeners = append(allListeners, listener)
-		listener.Start()
+		go listener.Start()
 	}
 	aw := NewAppWatcher(APP_TOPIC, allListeners, s)
 	return aw.Watch(qc, errc)

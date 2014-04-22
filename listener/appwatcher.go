@@ -20,6 +20,7 @@ func (a *AppWatcher) Watch(qc chan *Tweet, errc chan int) error {
 	msgc := make(chan redis.PubSubMessage)
 	stopc := make(chan bool, 1)
 	if err := a.store.Subscribe(a.topic, msgc, stopc); err != nil {
+		log.Printf("Error subscribing to channel: %q", err)
 		return err
 	}
 
@@ -38,6 +39,7 @@ func (a *AppWatcher) loop(msgc chan redis.PubSubMessage, qc chan *Tweet, errc ch
 			continue
 		}
 		appName := msg.Value
+		log.Printf("Received message for app: %s", appName)
 		var listener Listener
 		for _, l := range a.listeners {
 			if l.Name() == appName {
@@ -45,25 +47,33 @@ func (a *AppWatcher) loop(msgc chan redis.PubSubMessage, qc chan *Tweet, errc ch
 				break
 			}
 		}
+
+		app, err := a.store.GetApp(appName)
+		if err != nil {
+			log.Printf("Message channel error %s", err)
+			continue
+		}
+		userIDs, userErr := a.store.ListTwitterIDs(appName)
+		if userErr != nil {
+			log.Printf("Message channel error %s", userErr)
+			continue
+		}
+		if len(userIDs) == 0 {
+			log.Printf("No users found for app %q. Exiting.", appName)
+			continue
+		}
 		if listener == nil {
-			app, err := a.store.GetApp(appName)
-			if err != nil {
-				log.Printf("Message channel error %s", err)
-				continue
-			}
-			userIDs, userErr := a.store.ListTwitterIDs(appName)
-			if userErr != nil {
-				log.Printf("Message channel error %s", userErr)
-				continue
-			}
-			if len(userIDs) == 0 {
-				log.Printf("No users found for app %q. Exiting.", appName)
-				continue
-			}
 			listener = NewListener(app, userIDs, qc, errc)
 			a.listeners = append(a.listeners, listener)
+			log.Printf("Staring new listener for application %q.", appName)
+			go listener.Start()
+		} else {
+			listener.UpdateApp(app)
+			listener.UpdateUsers(userIDs)
+			log.Printf("Restarting listener for application %q.", appName)
+			go listener.Restart()
 		}
-		listener.Restart()
+
 	}
 
 }
