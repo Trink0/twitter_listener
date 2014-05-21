@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/Trink0/twitter_listener/source"
 )
 
 const (
@@ -26,7 +28,7 @@ func TestLoopOneTweet(t *testing.T) {
 
 	q := make(chan *Tweet, 1)
 	streamer := &httpStreamer{
-		app:   &Application{Name: DEFAULT_APP_NAME},
+		app:   &source.Application{Name: DEFAULT_APP_NAME},
 		users: []string{DEFAULT_USER_ID},
 		queue: q,
 		stopc: make(chan bool, 1),
@@ -51,7 +53,7 @@ func TestLoopGarbageTweet(t *testing.T) {
 
 	q := make(chan *Tweet, 1)
 	streamer := &httpStreamer{
-		app:   &Application{},
+		app:   &source.Application{},
 		users: []string{DEFAULT_USER_ID},
 		queue: q,
 		stopc: make(chan bool, 1),
@@ -78,7 +80,7 @@ func TestLoopTweetWithNotFollowedUser(t *testing.T) {
 
 	q := make(chan *Tweet, 1)
 	streamer := &httpStreamer{
-		app:   &Application{},
+		app:   &source.Application{},
 		users: []string{DEFAULT_USER_ID},
 		queue: q,
 		stopc: make(chan bool, 1),
@@ -97,7 +99,7 @@ func TestLoopTweetWithNotFollowedUser(t *testing.T) {
 func TestUpdateUsers(t *testing.T) {
 	q := make(chan *Tweet, 1)
 	streamer := &httpStreamer{
-		app:   &Application{},
+		app:   &source.Application{},
 		users: []string{DEFAULT_USER_ID},
 		queue: q,
 		stopc: make(chan bool, 1),

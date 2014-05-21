@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/Trink0/twitter_listener/source"
 	"github.com/fiorix/go-redis/redis"
 )
 
@@ -37,7 +38,7 @@ func (l *dummyListener) Name() string {
 	return l.name
 }
 
-func (l *dummyListener) UpdateApp(app *Application) {}
+func (l *dummyListener) UpdateApp(app *source.Application) {}
 
 func (l *dummyListener) UpdateUsers(users []string) {}
 
@@ -50,28 +51,28 @@ func (d *dummyQueue) Start(c chan *Tweet) {
 }
 
 func TestStartOne(t *testing.T) {
-	store := &dummyStore{}
-	store.getApp = func(name string) (*Application, error) {
+	config := &dummyConfigSource{}
+	config.getApp = func(name string) (*source.Application, error) {
 		if name != "chumhum" {
 			t.Errorf("Have app name %q, want chumhum", name)
 		}
-		return &Application{Name: name}, nil
+		return &source.Application{Name: name}, nil
 	}
-	store.listTwitterIDs = func(name string) ([]string, error) {
+	config.listTwitterIDs = func(name string) ([]string, error) {
 		return []string{"15170239", "1585341620"}, nil
 	}
-	store.subscribe = func(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
+	config.subscribe = func(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
 		return nil
 	}
 
 	dummy := &dummyListener{}
-	listenerFactory = func(app *Application, userIds []string, qc chan *Tweet, c chan int) Listener {
+	listenerFactory = func(app *source.Application, userIds []string, qc chan *Tweet, c chan int) Listener {
 		dummy.c = c
 		return dummy
 	}
 
 	queue := &dummyQueue{}
-	if err := StartOne("chumhum", store, queue); err != nil {
+	if err := StartOne("chumhum", config, queue); err != nil {
 		t.Fatal(err)
 	}
 	if !dummy.startCalled {
@@ -83,13 +84,13 @@ func TestStartOne(t *testing.T) {
 }
 
 func TestStartAllEmpty(t *testing.T) {
-	store := &dummyStore{}
-	store.listAppNames = func() ([]string, error) {
+	config := &dummyConfigSource{}
+	config.listAppNames = func() ([]string, error) {
 		return []string{}, nil
 	}
 
 	queue := &dummyQueue{}
-	err := StartAll(store, queue)
+	err := StartAll(config, queue)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,29 +101,29 @@ func TestStartAllEmpty(t *testing.T) {
 
 func TestStartAll(t *testing.T) {
 	twitterIDs := []string{"15170239", "1585341620"}
-	store := &dummyStore{}
-	store.listAppNames = func() ([]string, error) {
+	config := &dummyConfigSource{}
+	config.listAppNames = func() ([]string, error) {
 		return []string{"chumhum", "xpeppers"}, nil
 	}
-	store.getApp = func(name string) (*Application, error) {
-		return &Application{Name: name}, nil
+	config.getApp = func(name string) (*source.Application, error) {
+		return &source.Application{Name: name}, nil
 	}
-	store.listTwitterIDs = func(name string) ([]string, error) {
+	config.listTwitterIDs = func(name string) ([]string, error) {
 		return twitterIDs, nil
 	}
-	store.subscribe = func(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
+	config.subscribe = func(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
 		return nil
 	}
 
 	listeners := make([]*dummyListener, 0)
-	listenerFactory = func(app *Application, userIds []string, qc chan *Tweet, c chan int) Listener {
+	listenerFactory = func(app *source.Application, userIds []string, qc chan *Tweet, c chan int) Listener {
 		dummy := &dummyListener{name: app.Name, users: userIds, c: c}
 		listeners = append(listeners, dummy)
 		return dummy
 	}
 
 	queue := &dummyQueue{}
-	err := StartAll(store, queue)
+	err := StartAll(config, queue)
 	if err != nil {
 		t.Fatal(err)
 	}
