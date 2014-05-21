@@ -8,10 +8,10 @@ import (
 	"github.com/fiorix/go-redis/redis"
 )
 
-// NewConfigSource creates a new instance of Redis-based ConfigSource.
+// NewRedisSource creates a new instance of Redis-based ConfigSource.
 // The URL should not spcify any db number, e.g. "127.0.0.1:6379".
 // Internally, connection URL is then constructed from dbURL and a database number.
-func NewConfigSource(dbURL string, appDB, userDB int) ConfigSource {
+func NewRedisSource(dbURL string, appDB, userDB int) ConfigSource {
 	return &redisConfigSource{dbURL, appDB, userDB}
 }
 

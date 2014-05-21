@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	store := source.NewConfigSource(dbURL, appDB, userDB)
+	store := source.NewRedisSource(dbURL, appDB, userDB)
 	queue := listener.NewQueue(queueURL, queueName)
 
 	var startErr error
