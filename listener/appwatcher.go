@@ -3,16 +3,17 @@ package listener
 import (
 	"log"
 
+	"github.com/Trink0/twitter_listener/source"
 	"github.com/fiorix/go-redis/redis"
 )
 
 type AppWatcher struct {
 	topic     string
 	listeners []Listener
-	store     Store
+	store     source.ConfigSource
 }
 
-func NewAppWatcher(topic string, listeners []Listener, store Store) *AppWatcher {
+func NewAppWatcher(topic string, listeners []Listener, store source.ConfigSource) *AppWatcher {
 	return &AppWatcher{topic, listeners, store}
 }
 

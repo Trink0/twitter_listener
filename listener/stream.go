@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/Trink0/twitter_listener/source"
 	"github.com/garyburd/go-oauth/oauth"
 )
 
@@ -26,7 +27,7 @@ var (
 // httpStreamer is a default implementation of the Listener over HTTP
 // using Public Stream API.
 type httpStreamer struct {
-	app   *Application
+	app   *source.Application
 	users []string
 	queue chan *Tweet
 	stopc chan bool
@@ -45,7 +46,7 @@ func (s *httpStreamer) UpdateUsers(userIds []string) {
 	s.users = userIds
 }
 
-func (s *httpStreamer) UpdateApp(app *Application) {
+func (s *httpStreamer) UpdateApp(app *source.Application) {
 	s.app = app
 }
 

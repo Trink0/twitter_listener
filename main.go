@@ -4,7 +4,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/xpeppers/twitter_listener/listener"
+	"github.com/Trink0/twitter_listener/listener"
+	"github.com/Trink0/twitter_listener/source"
 )
 
 var (
@@ -31,7 +32,7 @@ func main() {
 		return
 	}
 
-	store := listener.NewStore(dbURL, appDB, userDB)
+	store := source.NewConfigSource(dbURL, appDB, userDB)
 	queue := listener.NewQueue(queueURL, queueName)
 
 	var startErr error

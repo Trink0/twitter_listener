@@ -2,6 +2,8 @@ package listener
 
 import (
 	"log"
+
+	"github.com/Trink0/twitter_listener/source"
 )
 
 // APP_TOPIC is Redis channel name
@@ -16,16 +18,16 @@ type Listener interface {
 	IsActive() bool
 	Name() string
 	UpdateUsers(userIds []string)
-	UpdateApp(app *Application)
+	UpdateApp(app *source.Application)
 }
 
 // NewListener creates a new listener with credentials provided by the app.
-func NewListener(app *Application, userIds []string, qc chan *Tweet, errc chan int) Listener {
+func NewListener(app *source.Application, userIds []string, qc chan *Tweet, errc chan int) Listener {
 	return listenerFactory(app, userIds, qc, errc)
 }
 
 // StartOne creates and starts one listener for the specified application.
-func StartOne(appName string, s Store, queue Queue) error {
+func StartOne(appName string, s source.ConfigSource, queue Queue) error {
 	app, err := s.GetApp(appName)
 	if err != nil {
 		return err
@@ -52,7 +54,7 @@ func StartOne(appName string, s Store, queue Queue) error {
 
 // StartAll creates and starts a new listener for each application
 // registered in the store.
-func StartAll(s Store, queue Queue) error {
+func StartAll(s source.ConfigSource, queue Queue) error {
 	appNames, err := s.ListAppNames()
 	if err != nil {
 		return err
@@ -89,6 +91,6 @@ func StartAll(s Store, queue Queue) error {
 
 // listenerFactory is by NewListener to create a new listener struct.
 // Meant overwritten in tests.
-var listenerFactory = func(a *Application, userIds []string, qc chan *Tweet, errc chan int) Listener {
+var listenerFactory = func(a *source.Application, userIds []string, qc chan *Tweet, errc chan int) Listener {
 	return &httpStreamer{app: a, users: userIds, queue: qc, errc: errc}
 }
