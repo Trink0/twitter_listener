@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/Trink0/twitter_listener/source"
-	"github.com/fiorix/go-redis/redis"
+	// "github.com/fiorix/go-redis/redis"
 )
 
 type AppWatcher struct {
@@ -18,7 +18,7 @@ func NewAppWatcher(topic string, listeners []Listener, store source.ConfigSource
 }
 
 func (a *AppWatcher) Watch(qc chan *Tweet, errc chan int) error {
-	msgc := make(chan redis.PubSubMessage)
+	msgc := make(chan source.Notification)
 	stopc := make(chan bool, 1)
 	if err := a.store.Subscribe(a.topic, msgc, stopc); err != nil {
 		log.Printf("Error subscribing to channel: %q", err)
@@ -32,7 +32,7 @@ func (a *AppWatcher) Watch(qc chan *Tweet, errc chan int) error {
 	return nil
 }
 
-func (a *AppWatcher) loop(msgc chan redis.PubSubMessage, qc chan *Tweet, errc chan int) {
+func (a *AppWatcher) loop(msgc chan source.Notification, qc chan *Tweet, errc chan int) {
 	for {
 		msg := <-msgc
 		if msg.Error != nil {

@@ -76,8 +76,23 @@ func (s *redisConfigSource) ListTwitterIDs(name string) ([]string, error) {
 	return twitterIDs, nil
 }
 
-func (s *redisConfigSource) Subscribe(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
-	return s.newClient(s.appDB).Subscribe(topic, msg, stop)
+func (s *redisConfigSource) Subscribe(topic string, msg chan Notification, stop chan bool) error {
+	redisCh := make(chan redis.PubSubMessage)
+	err := s.newClient(s.appDB).Subscribe(topic, redisCh, stop)
+	go func() {
+		for {
+			select {
+			case redisNotification := <-redisCh:
+				message := Notification{
+					Value:   redisNotification.Value,
+					Channel: redisNotification.Channel,
+					Error:   redisNotification.Error,
+				}
+				msg <- message
+			}
+		}
+	}()
+	return err
 }
 
 func (s *redisConfigSource) connectionURL(db int) string {

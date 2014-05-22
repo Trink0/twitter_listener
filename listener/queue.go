@@ -59,7 +59,7 @@ func (k *kestrelQueue) Start(qc chan *Tweet) {
 func (k *kestrelQueue) loop(qc chan *Tweet) {
 	for {
 		tweet := <-qc
-		activity := tweetToActivity(tweet)
+		activity := transform(tweet)
 		log.Printf("ENQUEUE: %+v", activity)
 		payload, err := json.Marshal(activity)
 		if err != nil {
@@ -71,7 +71,7 @@ func (k *kestrelQueue) loop(qc chan *Tweet) {
 	}
 }
 
-func tweetToActivity(tweet *Tweet) *Activity {
+func transform(tweet *Tweet) *Activity {
 	activity := &Activity{
 		Id:   uuid(),
 		Verb: "TWEET",

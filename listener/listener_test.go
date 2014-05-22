@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Trink0/twitter_listener/source"
-	"github.com/fiorix/go-redis/redis"
+	// "github.com/fiorix/go-redis/redis"
 )
 
 type dummyListener struct {
@@ -61,7 +61,7 @@ func TestStartOne(t *testing.T) {
 	config.listTwitterIDs = func(name string) ([]string, error) {
 		return []string{"15170239", "1585341620"}, nil
 	}
-	config.subscribe = func(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
+	config.subscribe = func(topic string, msg chan source.Notification, stop chan bool) error {
 		return nil
 	}
 
@@ -111,7 +111,7 @@ func TestStartAll(t *testing.T) {
 	config.listTwitterIDs = func(name string) ([]string, error) {
 		return twitterIDs, nil
 	}
-	config.subscribe = func(topic string, msg chan redis.PubSubMessage, stop chan bool) error {
+	config.subscribe = func(topic string, msg chan source.Notification, stop chan bool) error {
 		return nil
 	}
 

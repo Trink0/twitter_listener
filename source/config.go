@@ -1,8 +1,8 @@
 package source
 
-import (
-	"github.com/fiorix/go-redis/redis"
-)
+// import (
+// 	"github.com/fiorix/go-redis/redis"
+// )
 
 // Application is a customer/merchant
 type Application struct {
@@ -30,5 +30,5 @@ type ConfigSource interface {
 	// ListTwitterIDs returns Twitter IDs of all users that belong to an app
 	// identified by the given name.
 	ListTwitterIDs(name string) ([]string, error)
-	Subscribe(topic string, msg chan redis.PubSubMessage, stop chan bool) error
+	Subscribe(topic string, msg chan Notification, stop chan bool) error
 }
