@@ -32,14 +32,14 @@ func main() {
 		return
 	}
 
-	store := source.NewRedisSource(dbURL, appDB, userDB)
-	queue := listener.NewQueue(queueURL, queueName)
+	source := source.NewRedisSource(dbURL, appDB, userDB)
+	dest := listener.NewQueue(queueURL, queueName)
 
 	var startErr error
 	if appName := flag.Arg(0); appName != "" {
-		startErr = listener.StartOne(appName, store, queue)
+		startErr = listener.StartOne(appName, source, dest)
 	} else {
-		startErr = listener.StartAll(store, queue)
+		startErr = listener.StartAll(source, dest)
 	}
 
 	if startErr != nil {
