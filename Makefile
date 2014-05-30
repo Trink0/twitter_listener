@@ -4,6 +4,10 @@ build: clean
 	mkdir -p $(OUTDIR)
 	GOOS=linux GOARCH=amd64 go build -o $(OUTDIR)/twitter_listener main.go
 
+build32: clean
+	mkdir -p $(OUTDIR)
+	GOOS=linux GOARCH=386 go build -o $(OUTDIR)/twitter_listener main.go
+
 run:
 	CGO_ENABLED=1 go run main.go xpeppers
 
